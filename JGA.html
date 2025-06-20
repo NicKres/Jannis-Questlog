@@ -7,20 +7,20 @@
     <!-- Tailwind CSS CDN für schnelle Styling-Grundlagen -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts für einen Fantasy-Look -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English+SC&family=Georgia&family=Lancelot&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica:ital@0;1&family=Georgia&family=Lancelot&display=swap" rel="stylesheet">
     <style>
         /* Grundlegende Stile für den Body */
         body {
-            background-color: #2b2a2a; /* Dunkler Hintergrund */
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a; /* Dunkler Hintergrund */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
             box-sizing: border-box;
-            font-family: 'IM Fell English SC', serif; /* Standard-Textschrift */
-            color: #ccc;
+            font-family: 'IM Fell Double Pica', serif; /* Standard-Textschrift */
+            color: #ccc; /* Standardtextfarbe */
         }
 
         /* Angepasste Scrollbar für Firefox */
@@ -54,21 +54,28 @@
         /* Stil für das Hauptfenster des Questlogs */
         .questlog-window {
             /* Anpassung für das gesamte Questlog-Container */
-            width: 90%; /* Relative Breite, kann auch feste Pixel wie 700px sein */
-            max-width: 800px; /* Maximale Breite für größere Bildschirme */
-            height: 70vh; /* Nimmt 70% der Viewport-Höhe ein, anpassbar auf z.B. 600px */
-            overflow-y: auto; /* Vertikales Scrollen aktivieren, wenn Inhalt überläuft */
-            overflow-x: hidden; /* Horizontales Scrollen vermeiden */
-            border: 6px solid #4a3b2a; /* Hauptrahmen in Dunkelbraun */
-            border-radius: 12px;
-            padding: 20px; /* Zusätzliches Padding für den Gesamtinhalt */
-            background-color: #1a1a1a; /* Sehr dunkler Hintergrund für den Innenbereich */
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8),
-                        0 0 0 2px #6a5b4a; /* Zusätzlicher goldener Schatten für den Rahmeneffekt */
+            width: 90%;
+            max-width: 800px; /* Realistische Breite für ein Questlog */
+            height: 70vh; /* Nimmt einen guten Teil der Bildschirmhöhe ein */
+            min-height: 400px; /* Mindesthöhe, damit es nicht zu klein wird */
+            /* Pergament-Effekt ohne Bild */
+            background-color: #f7e6b7; /* Hellerer Pergament-Ton */
+            background-image: radial-gradient(circle at 50% 0, rgba(255,255,255,0.1) 0%, transparent 70%),
+                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.1) 0%, transparent 70%),
+                              radial-gradient(circle at 100% 100%, rgba(255,255,255,0.1) 0%, transparent 70%),
+                              radial-gradient(circle at 50% 100%, rgba(0,0,0,0.1) 0%, transparent 70%); /* Dezenter Verlauf für Tiefe */
+            border: 5px solid #4a3e2a; /* Dunkler Holz- oder Metallrahmen */
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(0, 0, 0, 0.6); /* Starke Schatten */
+            padding: 30px;
+            overflow-y: auto;
+            overflow-x: hidden;
             position: relative;
+            color: #5a3b1a; /* Dunklerer Pergament-Text Standardfarbe */
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5); /* Leichter weißer Textschatten für Lesbarkeit */
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            min-height: 600px; /* Mindesthöhe beibehalten */
         }
         /* Styling für den Scrollbalken (Webkit-Browser wie Chrome, Safari) */
         .questlog-window::-webkit-scrollbar {
@@ -131,13 +138,14 @@
         .questlog-content {
             display: flex;
             flex-grow: 1; /* Nimmt den verbleibenden Platz ein */
-            background-color: #1e1e1e; /* Hintergrund für den Inhaltsbereich */
+            /* background-color: #1e1e1e; Removed as quest-log provides background */
+            margin-top: 20px; /* Abstand zum Header */
         }
 
         /* Linke Spalte: Questliste */
         .questlist-panel {
             width: 35%; /* Breite der Questlisten-Spalte */
-            background-color: #2a2a2a; /* Dunklerer Hintergrund für die Liste */
+            background-color: rgba(0, 0, 0, 0.1); /* Sehr leichte Transparenz für die Liste */
             border-right: 2px solid #4a3b2a; /* Trennlinie */
             padding: 15px;
             overflow-y: auto; /* Scrollbar bei Überlauf */
@@ -146,21 +154,39 @@
             gap: 10px;
             min-width: 250px; /* Mindestbreite für die Liste */
         }
+        /* Styling für den Scrollbalken des List-Panels */
+        .questlist-panel::-webkit-scrollbar {
+            width: 12px;
+        }
+        .questlist-panel::-webkit-scrollbar-track {
+            background: #3a322a;
+            border-radius: 10px;
+        }
+        .questlist-panel::-webkit-scrollbar-thumb {
+            background: #7a6e5a;
+            border-radius: 10px;
+            border: 2px solid #5a4b3d;
+        }
+        .questlist-panel::-webkit-scrollbar-thumb:hover {
+            background: #9a8c7a;
+        }
+
 
         /* Stil für einzelne Quest-Items in der Liste */
         .quest-item {
-            background-color: #3a3a3a;
-            border: 1px solid #4a4a4a;
-            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.05); /* Sehr leichte Transparenz auf Pergament */
+            border: 1px solid rgba(74, 62, 42, 0.3); /* Dezenter Rahmen */
+            border-radius: 5px;
             padding: 10px 15px;
             cursor: pointer;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Leichter Schatten */
+            display: flex; /* Für Icon und Titel nebeneinander */
+            align-items: center;
         }
 
         .quest-item:hover {
-            background-color: #4a4a4a;
-            border-color: #6a6a6a;
+            background-color: rgba(0, 0, 0, 0.1); /* Leicht dunkler bei Hover */
         }
 
         .quest-item.selected {
@@ -177,21 +203,55 @@
 
         /* Anpassung für die Quest-Titel (Überschriften) */
         .quest-item-title, .details-title { /* Kombinierter Selektor */
-            font-family: 'Lancelot', cursive; /* Beibehaltung der Fantasy-Schriftart */
-            color: #e0c880; /* Goldton für Überschriften */
-            font-size: 1.5em; /* Größe beibehalten oder leicht anpassen */
-            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
+            font-family: 'Cinzel Decorative', serif; /* WoW-ähnliche Schrift */
+            color: #6d4b29; /* Dunklerer brauner Ton, der gut zu Pergament passt */
+            font-size: 1.6em;
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5); /* Heller Schatten für Kontrast */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1; /* Nimmt verfügbaren Platz ein */
+        }
+        .details-title { /* Für den Detail-Titel im rechten Panel */
+            font-size: 1.8em; /* Etwas größer als Listentitel */
+            border-bottom: 1px solid #4a3b2a;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .quest-item-status {
-            font-size: 0.85rem;
-            color: #a0a0a0; /* Standardfarbe */
+
+        /* Quest Status Icon Container */
+        .quest-status {
+            width: 32px; /* Größe der WoW-Icons */
+            height: 32px;
+            flex-shrink: 0; /* Verhindert das Schrumpfen */
+            margin-right: 12px;
+            /* Icons ohne Bilder, mit CSS */
+            border-radius: 50%; /* Macht sie rund wie die WoW-Icons */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cinzel Decorative', serif; /* Schriftart für das Symbol */
+            font-size: 1.8em; /* Größe des Symbols (!, ?, X) */
+            font-weight: bold;
+            color: white; /* Farbe des Symbols */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            border: 2px solid rgba(0,0,0,0.5); /* Rand um das Symbol */
         }
-        /* Farben für Status-Texte */
-        .status-aktiv { color: #28a745; /* Grün */ }
-        .status-abgeschlossen { color: #007bff; /* Blau */ }
-        .status-fehlgeschlagen { color: #dc3545; /* Rot */ }
-        .status-folgequest { color: #ffc107; /* Gelb/Orange */ }
+
+        /* --- Farben für jeden Status --- */
+        .quest-status.aktiv {
+            background-color: #c48c1a; /* WoW-Gelb/Orange für aktive Quest */
+        }
+        .quest-status.abgeschlossen {
+            background-color: #4a4a4a; /* Grau für abgeschlossenes Quest */
+        }
+        .quest-status.fehlgeschlagen {
+            background-color: #8c0000; /* Dunkles Rot für fehlgeschlagenes Quest */
+        }
+        .quest-status.folgequest {
+            background-color: #c48c1a; /* Orange/Gold für Folgequest (wie aktiv) */
+        }
 
 
         /* Rechte Spalte: Quest-Details */
@@ -203,6 +263,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-color: rgba(0, 0, 0, 0.1); /* Leichte Transparenz für Details */
+            border-radius: 8px; /* Passende Ecken */
         }
         /* Styling für den Scrollbalken des Details-Panels (Webkit-Browser wie Chrome, Safari) */
         .quest-details-panel::-webkit-scrollbar {
@@ -225,12 +287,12 @@
         /* Generelle Anpassung für den Haupttext in Quest-Details */
         .read-only-text {
             /* Beibehaltung des Pergament-Looks und Hinzufügung der Lesbarkeits-Optimierungen */
-            background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment');
+            background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment'); /* Beispiel Pergament-Hintergrund - kann entfernt werden, wenn Pergament-Container-Hintergrund ausreicht */
             background-size: cover;
             background-color: #f8f0e3; /* Hellbeige für Pergament-Effekt */
             border: 1px solid #7a6b5a;
             border-radius: 5px;
-            padding: 10px;
+            padding: 15px; /* Etwas mehr Padding für den Textbereich */
             white-space: pre-wrap; /* Behält Zeilenumbrüche bei */
             overflow: hidden; /* Für den Schreibeffekt */
 
@@ -238,17 +300,11 @@
             font-family: 'Georgia', serif; /* Eine klassische, gut lesbare Serifenschrift */
             font-size: 1.05em; /* Etwas größer für bessere Lesbarkeit */
             line-height: 1.6; /* Für besseren Zeilenabstand */
-            color: #f0e6c8; /* Cremefarben für besseren Kontrast auf dunklem Hintergrund */
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Leichter Schatten für "Tiefe" */
+            color: #5a3b1a; /* Dunklerer Text für Pergament */
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5); /* Leichter weißer Textschatten für Lesbarkeit */
         }
 
-        .details-title {
-            border-bottom: 1px solid #4a3b2a;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        /* Stile für Textareas und Input-Felder */
+        /* Stile für Textareas und Input-Felder (Bearbeitungsmodus) */
         .editable-field {
             background-color: #111; /* Sehr dunkler Hintergrund */
             border: 1px solid #4a3b2a;
@@ -259,7 +315,7 @@
             width: 100%;
             box-sizing: border-box; /* Padding und Border werden in die Breite eingerechnet */
             resize: vertical; /* Nur vertikal anpassbar */
-            font-family: 'IM Fell English SC', serif;
+            font-family: 'IM Fell Double Pica', serif;
         }
 
         .editable-field:focus {
@@ -324,7 +380,7 @@
             border-radius: 10px;
             padding: 25px 35px;
             color: white;
-            font-family: 'IM Fell English SC', serif;
+            font-family: 'IM Fell Double Pica', serif;
             font-size: 1.2rem;
             text-align: center;
             z-index: 1000;
@@ -913,13 +969,29 @@
                     questItem.addEventListener('dragend', handleDragEnd);
                 }
 
+                // Bestimme das Symbol basierend auf dem Status
+                let statusSymbol = '';
+                switch(quest.status) {
+                    case 'aktiv':
+                        statusSymbol = '!';
+                        break;
+                    case 'abgeschlossen':
+                        statusSymbol = '?';
+                        break;
+                    case 'fehlgeschlagen':
+                        statusSymbol = 'X';
+                        break;
+                    case 'folgequest':
+                        statusSymbol = '?'; // Gelbes Fragezeichen wie bei abgeschlossen, aber mit anderer Farbe
+                        break;
+                    default:
+                        statusSymbol = '';
+                }
 
                 questItem.innerHTML = `
+                    <div class="quest-status ${quest.status}">${statusSymbol}</div> <!-- Icon kommt zuerst mit Textsymbol -->
                     <div class="quest-item-title">${quest.title}</div>
-                    <div class="quest-item-status status-${quest.status}">${quest.status.charAt(0).toUpperCase() + quest.status.slice(1)}</div>
                 `;
-                // Setzt die Klasse status-aktiv, status-abgeschlossen etc.
-                // und zeigt den Status mit Großbuchstaben am Anfang an (z.B. "Aktiv")
 
 
                 // Event Listener nur hinzufügen, wenn im Bearbeitungsmodus ODER wenn keine "Folgequest" im Ansichtsmodus
