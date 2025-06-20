@@ -374,6 +374,37 @@
             box-shadow: 0.5px 0.5px 2px rgba(0, 0, 0, 0.5);
         }
 
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: gold;
+            font-size: 1.5rem;
+            z-index: 999;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-top: 4px solid gold;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
         @media (max-width: 768px) {
             .questlog-content {
                 flex-direction: column; /* Vertikales Layout auf kleineren Bildschirmen */
@@ -412,6 +443,12 @@
 </head>
 <body>
     <div class="questlog-window">
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Lade Quests...</p>
+        </div>
+
         <!-- Header-Bereich des Questlogs -->
         <div class="questlog-header">
             <span class="header-title">Questlog</span>
@@ -489,8 +526,9 @@
             </div>
         </div>
 
-        <!-- Footer für den Login-Bereich -->
+        <!-- Footer für den Login-Bereich und User ID -->
         <div id="questlogFooter" class="questlog-footer">
+            <div id="userIdDisplay" class="text-sm text-gray-400 mr-auto">User ID: Lade...</div>
             <div id="passwordPanel" class="password-panel">
                 <label for="passwordInput" class="text-gold-300 text-sm font-bold">Passwort für Bearbeitung:</label>
                 <input type="password" id="passwordInput" class="password-input" placeholder="Passwort">
@@ -505,7 +543,12 @@
         <button id="messageBoxCloseButton">OK</button>
     </div>
 
-    <script>
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // DOM-Elemente abrufen
         const questListPanel = document.getElementById('questListPanel');
         const questDetailsPanel = document.getElementById('questDetailsPanel');
@@ -525,7 +568,7 @@
         // Read-only Mode Elemente
         const detailsTitleReadOnly = document.getElementById('detailsTitleReadOnly');
         const roDescription = document.getElementById('roDescription');
-        const roObjectivesContainer = document.getElementById('roObjectivesContainer'); // Geändert von ul zu div
+        const roObjectivesContainer = document.getElementById('roObjectivesContainer');
         const roReward = document.getElementById('roReward');
         const roStatus = document.getElementById('roStatus');
         const readOnlyFields = document.getElementById('readOnlyFields');
@@ -546,11 +589,38 @@
         const messageText = document.getElementById('messageText');
         const messageBoxCloseButton = document.getElementById('messageBoxCloseButton');
         const closeButton = document.getElementById('closeButton');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
         let quests = []; // Array zum Speichern der Quest-Daten
         let selectedQuestId = null; // ID der aktuell ausgewählten Quest
         let isEditMode = false; // Steuert den Modus (Bearbeiten vs. Nur-Ansicht)
         let typingTimeout; // Für den Schreibeffekt
+
+        // Firebase Initialisierung
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        let app;
+        let db;
+        let auth;
+        let currentUserId = null;
+        let questCollectionRef;
+        let isFirebaseReady = false; // Flag to indicate Firebase is ready
+
+        /**
+         * Zeigt eine Ladeanzeige an.
+         */
+        function showLoading() {
+            loadingOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Verbirgt die Ladeanzeige.
+         */
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
 
         /**
          * Zeigt eine Meldungsbox mit einer Nachricht an.
@@ -569,83 +639,86 @@
         }
 
         /**
-         * Lädt Quests aus dem Local Storage des Browsers.
-         * Überprüft auch den gespeicherten Bearbeitungsmodus.
+         * Initialisiert Firebase und lädt Quests.
          */
-        function loadQuests() {
-            const storedQuests = localStorage.getItem('wowQuestlogQuests');
-            if (storedQuests) {
-                quests = JSON.parse(storedQuests);
-            } else {
-                // Initial-Quests, wenn keine gespeichert sind
-                quests = [
-                    {
-                        id: 'q1',
-                        title: 'Die Suche nach Mankriks Frau',
-                        description: 'Finde Mankriks Frau, sie ist irgendwo in den Brachlanden verloren gegangen. Sie wurde zuletzt in der Nähe der Road in The Barrens gesehen. Sieh dich in der Nähe der Oasen um.',
-                        objectives: ['Finde Mankriks Frau (0/1)'],
-                        reward: '20 Silbermünzen, 100 Ruf bei der Horde',
-                        status: 'Aktiv'
-                    },
-                    {
-                        id: 'q2',
-                        title: 'Töte 10 Wildschweine',
-                        description: 'Die Gegend um Durotar ist von Wildschweinen überrannt. Bring uns ihre Stoßzähne als Beweis.',
-                        objectives: ['Erlege 10 Wildschweine (10/10)', 'Sammle 10 Stoßzähne (10/10)'],
-                        reward: '35 Silbermünzen, Lederhandschuhe',
-                        status: 'Abgeschlossen'
-                    },
-                    {
-                        id: 'q3',
-                        title: 'Die Geheimnisse des dunklen Waldes',
-                        description: 'Ein alter Druide sprach von seltsamen Vorkommnissen tief im Wald von Elwynn. Untersuche die Quelle der Verderbnis.',
-                        objectives: ['Finde die Quelle der Verderbnis (0/1)', 'Berichte dem Druiden (0/1)'],
-                        reward: 'Leichter Heiltrank, 50 Ruf bei der Allianz',
-                        status: 'Folgequest' // Neue Quest mit Status "Folgequest"
+        async function initializeFirebaseAndLoadQuests() {
+            showLoading();
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Firestore-Sammlung für öffentliche Quests
+                questCollectionRef = collection(db, `artifacts/${appId}/public/data/quests`);
+
+                // Authentifizierung
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        userIdDisplay.textContent = `User ID: ${currentUserId}`;
+                        isFirebaseReady = true;
+                        loadQuestsFromFirestore(); // Quests laden, sobald authentifiziert
+                    } else {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined') {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Firebase Auth Error:", error);
+                            showMessageBox("Fehler bei der Authentifizierung: " + error.message);
+                            hideLoading();
+                        }
                     }
-                ];
-            }
-
-            const storedEditMode = localStorage.getItem('wowQuestlogEditMode');
-            if (storedEditMode === 'true') {
-                isEditMode = true; // Setze den Modus auf Bearbeiten, wenn gespeichert
-                passwordPanel.classList.add('hidden'); // Verstecke das Passwort-Panel sofort
-            } else {
-                isEditMode = false;
-                passwordPanel.classList.remove('hidden'); // Zeige das Passwort-Panel
-            }
-
-            updateUIForMode();
-            renderQuestList();
-
-            // Standardmäßig die erste Quest auswählen oder den Detailbereich leeren
-            if (quests.length > 0) {
-                // Im Ansichtsmodus nur aktive oder abgeschlossene Quest auswählen
-                const initialSelectableQuest = isEditMode
-                    ? quests[0]
-                    : quests.find(q => q.status === 'Aktiv' || q.status === 'Abgeschlossen');
-
-                if (initialSelectableQuest) {
-                    selectQuest(initialSelectableQuest.id);
-                } else {
-                    clearQuestDetails();
-                    detailsTitleReadOnly.textContent = 'Keine sichtbaren Quests zum Anzeigen.';
-                    detailsTitleEditMode.textContent = 'Füge eine neue Quest hinzu oder mache eine aktiv!';
-                }
-            } else {
-                clearQuestDetails();
-                detailsTitleReadOnly.textContent = 'Keine Quests zum Anzeigen.';
-                detailsTitleEditMode.textContent = 'Füge eine neue Quest hinzu!';
+                });
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                showMessageBox("Fehler beim Initialisieren von Firebase: " + error.message);
+                hideLoading();
             }
         }
 
         /**
-         * Speichert Quests und den aktuellen Bearbeitungsmodus im Local Storage.
+         * Lädt Quests von Firestore.
          */
-        function saveQuests() {
-            localStorage.setItem('wowQuestlogQuests', JSON.stringify(quests));
-            localStorage.setItem('wowQuestlogEditMode', isEditMode.toString());
-            showMessageBox('Quests erfolgreich gespeichert!');
+        function loadQuestsFromFirestore() {
+            if (!isFirebaseReady) return;
+
+            onSnapshot(questCollectionRef, (snapshot) => {
+                const fetchedQuests = [];
+                snapshot.forEach(doc => {
+                    fetchedQuests.push({ id: doc.id, ...doc.data() });
+                });
+                quests = fetchedQuests; // Quests-Array aktualisieren
+                updateUIForMode(); // UI-Modus aktualisieren
+                renderQuestList(); // Liste neu rendern
+
+                // Initial- oder ausgewählte Quest im Detailbereich anzeigen
+                if (quests.length > 0) {
+                    const previouslySelected = quests.find(q => q.id === selectedQuestId);
+                    const initialSelectableQuest = isEditMode
+                        ? (previouslySelected || quests[0])
+                        : (previouslySelected || quests.find(q => q.status === 'Aktiv' || q.status === 'Abgeschlossen'));
+
+                    if (initialSelectableQuest) {
+                        selectQuest(initialSelectableQuest.id);
+                    } else {
+                        clearQuestDetails();
+                        detailsTitleReadOnly.textContent = 'Keine sichtbaren Quests zum Anzeigen.';
+                        detailsTitleEditMode.textContent = 'Füge eine neue Quest hinzu oder mache eine aktiv!';
+                    }
+                } else {
+                    clearQuestDetails();
+                    detailsTitleReadOnly.textContent = 'Keine Quests zum Anzeigen.';
+                    detailsTitleEditMode.textContent = 'Füge eine neue Quest hinzu!';
+                }
+                hideLoading();
+            }, (error) => {
+                console.error("Fehler beim Laden der Quests von Firestore:", error);
+                showMessageBox("Fehler beim Laden der Quests: " + error.message);
+                hideLoading();
+            });
         }
 
         /**
@@ -703,7 +776,7 @@
                 `;
 
                 // Event Listener nur hinzufügen, wenn im Bearbeitungsmodus ODER wenn keine "Folgequest" im Ansichtsmodus
-                if (isEditMode || (quest.status !== 'Folgequest' && quest.status !== 'Ausgeblendet')) { // Added 'Ausgeblendet' for future use if needed
+                if (isEditMode || (quest.status !== 'Folgequest' && quest.status !== 'Ausgeblendet')) {
                     questItem.addEventListener('click', () => selectQuest(quest.id));
                 }
 
@@ -718,7 +791,7 @@
          * @param {number} delay - Verzögerung zwischen den Zeichen in ms.
          * @returns {Promise<void>} - Ein Promise, das erfüllt wird, wenn der Schreibeffekt abgeschlossen ist.
          */
-        function typeText(element, text, delay = 50) {
+        function typeText(element, text, delay = 30) { // Reduced delay for faster typing
             return new Promise(resolve => {
                 if (typingTimeout) clearTimeout(typingTimeout); // Vorherigen Timeout löschen
                 element.textContent = ''; // Element leeren
@@ -771,13 +844,13 @@
                 roObjectivesContainer.innerHTML = ''; // Vorherige Ziele leeren
 
                 // Schreibeffekt für Beschreibung, Ziele und Belohnung nacheinander
-                typeText(roDescription, quest.description, 30)
+                typeText(roDescription, quest.description)
                     .then(() => {
                         const objectivesText = quest.objectives.map(obj => `• ${obj}`).join('\n'); // Format als Aufzählung
-                        return typeText(roObjectivesContainer, objectivesText, 30); // Für Ziele
+                        return typeText(roObjectivesContainer, objectivesText); // Für Ziele
                     })
-                    .then(() => typeText(roReward, quest.reward, 30)) // Für Belohnung
-                    .then(() => typeText(roStatus, quest.status, 30)); // Für Status
+                    .then(() => typeText(roReward, quest.reward)) // Für Belohnung
+                    .then(() => typeText(roStatus, quest.status)); // Für Status
             }
             renderQuestList(); // Liste aktualisieren, um Auswahl hervorzuheben
             updateUIForMode(); // UI-Elemente basierend auf dem Modus aktualisieren
@@ -811,51 +884,75 @@
         }
 
         /**
-         * Fügt eine neue leere Quest hinzu.
+         * Fügt eine neue leere Quest hinzu (in Firestore).
          */
-        function addQuest() {
-            const newId = 'q' + Date.now(); // Eindeutige ID generieren
-            const newQuest = {
-                id: newId,
-                title: 'Neue Quest',
-                description: 'Dies ist eine brandneue Quest. Bearbeite die Details!',
-                objectives: ['Erstes Ziel (0/1)'],
-                reward: 'Unbekannt',
-                status: 'Aktiv'
-            };
-            quests.push(newQuest);
-            saveQuests(); // Speichern und Liste neu rendern
-            selectQuest(newId); // Neue Quest direkt auswählen
-            showMessageBox('Neue Quest hinzugefügt!');
+        async function addQuest() {
+            if (!isFirebaseReady) {
+                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
+                return;
+            }
+            showLoading();
+            try {
+                const newQuest = {
+                    title: 'Neue Quest',
+                    description: 'Dies ist eine brandneue Quest. Bearbeite die Details!',
+                    objectives: ['Erstes Ziel (0/1)'],
+                    reward: 'Unbekannt',
+                    status: 'Aktiv',
+                    createdAt: new Date().toISOString() // Timestamp hinzufügen
+                };
+                const docRef = await addDoc(questCollectionRef, newQuest);
+                selectQuest(docRef.id); // Neue Quest direkt auswählen
+                showMessageBox('Neue Quest hinzugefügt!');
+            } catch (e) {
+                console.error("Fehler beim Hinzufügen der Quest: ", e);
+                showMessageBox("Fehler beim Hinzufügen der Quest: " + e.message);
+            } finally {
+                hideLoading();
+            }
         }
 
         /**
-         * Speichert die Änderungen an der aktuell ausgewählten Quest.
+         * Speichert die Änderungen an der aktuell ausgewählten Quest (in Firestore).
          */
-        function saveQuestChanges() {
+        async function saveQuestChanges() {
+            if (!isFirebaseReady) {
+                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
+                return;
+            }
             if (!selectedQuestId) {
                 showMessageBox('Bitte wähle eine Quest zum Speichern aus.');
                 return;
             }
 
-            const questIndex = quests.findIndex(q => q.id === selectedQuestId);
-            if (questIndex !== -1) {
-                quests[questIndex].title = questTitleInput.value;
-                quests[questIndex].description = questDescriptionTextarea.value;
-                quests[questIndex].objectives = questObjectivesTextarea.value.split('\n').filter(line => line.trim() !== '');
-                quests[questIndex].reward = questRewardInput.value;
-                quests[questIndex].status = questStatusSelect.value;
-                saveQuests();
-                renderQuestList(); // Liste aktualisieren (Titel, Status)
-                detailsTitleEditMode.textContent = questTitleInput.value; // Titel im Detailbereich aktualisieren
+            showLoading();
+            try {
+                const updatedQuest = {
+                    title: questTitleInput.value,
+                    description: questDescriptionTextarea.value,
+                    objectives: questObjectivesTextarea.value.split('\n').filter(line => line.trim() !== ''),
+                    reward: questRewardInput.value,
+                    status: questStatusSelect.value,
+                    updatedAt: new Date().toISOString() // Timestamp aktualisieren
+                };
+                await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuest, { merge: true });
                 showMessageBox('Änderungen gespeichert!');
+            } catch (e) {
+                console.error("Fehler beim Speichern der Änderungen: ", e);
+                showMessageBox("Fehler beim Speichern der Änderungen: " + e.message);
+            } finally {
+                hideLoading();
             }
         }
 
         /**
-         * Löscht die aktuell ausgewählte Quest.
+         * Löscht die aktuell ausgewählte Quest (in Firestore).
          */
-        function deleteQuest() {
+        async function deleteQuest() {
+            if (!isFirebaseReady) {
+                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
+                return;
+            }
             if (!selectedQuestId) {
                 showMessageBox('Bitte wähle eine Quest zum Löschen aus.');
                 return;
@@ -865,13 +962,17 @@
             showMessageBox('Soll diese Quest wirklich gelöscht werden?');
             messageBoxCloseButton.textContent = 'Ja'; // Text ändern für Ja/Nein
             const originalCloseHandler = messageBoxCloseButton.onclick; // Handler sichern
-            messageBoxCloseButton.onclick = () => {
-                const questIndex = quests.findIndex(q => q.id === selectedQuestId);
-                if (questIndex !== -1) {
-                    quests.splice(questIndex, 1); // Quest aus dem Array entfernen
-                    saveQuests(); // Speichern
+            messageBoxCloseButton.onclick = async () => {
+                showLoading();
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId));
                     clearQuestDetails(); // Detailansicht leeren
                     showMessageBox('Quest gelöscht!');
+                } catch (e) {
+                    console.error("Fehler beim Löschen der Quest: ", e);
+                    showMessageBox("Fehler beim Löschen der Quest: " + e.message);
+                } finally {
+                    hideLoading();
                     messageBoxCloseButton.textContent = 'OK'; // Reset Text
                     messageBoxCloseButton.onclick = originalCloseHandler; // Reset Handler
                 }
@@ -891,7 +992,7 @@
         }
 
         /**
-         * Sortiert die Quests basierend auf dem ausgewählten Kriterium.
+         * Sortiert die Quests basierend auf dem ausgewählten Kriterium (in memory).
          */
         function sortQuests() {
             const criteria = sortCriteriaSelect.value;
@@ -946,7 +1047,7 @@
         });
 
         // App beim Laden starten
-        document.addEventListener('DOMContentLoaded', loadQuests);
+        document.addEventListener('DOMContentLoaded', initializeFirebaseAndLoadQuests);
     </script>
 </body>
 </html>
