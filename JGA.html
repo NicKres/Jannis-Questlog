@@ -7,7 +7,7 @@
     <!-- Tailwind CSS CDN für schnelle Styling-Grundlagen -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts für einen Fantasy-Look -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English+SC&family=Georgia&family=Lancelot&display=swap" rel="stylesheet">
     <style>
         /* Grundlegende Stile für den Body */
         body {
@@ -53,19 +53,40 @@
 
         /* Stil für das Hauptfenster des Questlogs */
         .questlog-window {
-            background-color: #1a1a1a; /* Sehr dunkler Hintergrund für den Innenbereich */
+            /* Anpassung für das gesamte Questlog-Container */
+            width: 90%; /* Relative Breite, kann auch feste Pixel wie 700px sein */
+            max-width: 800px; /* Maximale Breite für größere Bildschirme */
+            height: 70vh; /* Nimmt 70% der Viewport-Höhe ein, anpassbar auf z.B. 600px */
+            overflow-y: auto; /* Vertikales Scrollen aktivieren, wenn Inhalt überläuft */
+            overflow-x: hidden; /* Horizontales Scrollen vermeiden */
             border: 6px solid #4a3b2a; /* Hauptrahmen in Dunkelbraun */
             border-radius: 12px;
+            padding: 20px; /* Zusätzliches Padding für den Gesamtinhalt */
+            background-color: #1a1a1a; /* Sehr dunkler Hintergrund für den Innenbereich */
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.8),
                         0 0 0 2px #6a5b4a; /* Zusätzlicher goldener Schatten für den Rahmeneffekt */
-            max-width: 900px;
-            width: 100%;
+            position: relative;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Sicherstellen, dass nichts überläuft */
-            position: relative;
-            min-height: 600px; /* Mindesthöhe für das Fenster */
+            min-height: 600px; /* Mindesthöhe beibehalten */
         }
+        /* Styling für den Scrollbalken (Webkit-Browser wie Chrome, Safari) */
+        .questlog-window::-webkit-scrollbar {
+            width: 12px; /* Breite des Scrollbalkens */
+        }
+        .questlog-window::-webkit-scrollbar-track {
+            background: #3a322a; /* Hintergrund der Scrollspur */
+            border-radius: 10px;
+        }
+        .questlog-window::-webkit-scrollbar-thumb {
+            background: #7a6e5a; /* Farbe des Scrollbalken-Greifers */
+            border-radius: 10px;
+            border: 2px solid #5a4b3d; /* Rahmen um den Greifer */
+        }
+        .questlog-window::-webkit-scrollbar-thumb:hover {
+            background: #9a8c7a; /* Farbe beim Hover */
+        }
+
 
         /* Stil für den Header-Bereich */
         .questlog-header {
@@ -154,34 +175,74 @@
             pointer-events: none; /* Macht es nicht klickbar */
         }
 
-        .quest-item-title {
-            font-family: 'Cinzel Decorative', serif;
-            font-size: 1.1rem;
-            color: gold;
-            margin-bottom: 5px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+        /* Anpassung für die Quest-Titel (Überschriften) */
+        .quest-item-title, .details-title { /* Kombinierter Selektor */
+            font-family: 'Lancelot', cursive; /* Beibehaltung der Fantasy-Schriftart */
+            color: #e0c880; /* Goldton für Überschriften */
+            font-size: 1.5em; /* Größe beibehalten oder leicht anpassen */
+            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
         }
 
         .quest-item-status {
             font-size: 0.85rem;
-            color: #a0a0a0;
+            color: #a0a0a0; /* Standardfarbe */
         }
+        /* Farben für Status-Texte */
+        .status-aktiv { color: #28a745; /* Grün */ }
+        .status-abgeschlossen { color: #007bff; /* Blau */ }
+        .status-fehlgeschlagen { color: #dc3545; /* Rot */ }
+        .status-folgequest { color: #ffc107; /* Gelb/Orange */ }
+
 
         /* Rechte Spalte: Quest-Details */
         .quest-details-panel {
             flex-grow: 1; /* Nimmt den restlichen Platz ein */
             padding: 20px;
+            max-height: 100%; /* Begrenzung der Höhe, um Scrollbar im Container zu erlauben */
             overflow-y: auto; /* Scrollbar bei Überlauf */
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
+        /* Styling für den Scrollbalken des Details-Panels (Webkit-Browser wie Chrome, Safari) */
+        .quest-details-panel::-webkit-scrollbar {
+            width: 12px; /* Breite des Scrollbalkens */
+        }
+        .quest-details-panel::-webkit-scrollbar-track {
+            background: #3a322a; /* Hintergrund der Scrollspur */
+            border-radius: 10px;
+        }
+        .quest-details-panel::-webkit-scrollbar-thumb {
+            background: #7a6e5a; /* Farbe des Scrollbalken-Greifers */
+            border-radius: 10px;
+            border: 2px solid #5a4b3d; /* Rahmen um den Greifer */
+        }
+        .quest-details-panel::-webkit-scrollbar-thumb:hover {
+            background: #9a8c7a; /* Farbe beim Hover */
+        }
+
+
+        /* Generelle Anpassung für den Haupttext in Quest-Details */
+        .read-only-text {
+            /* Beibehaltung des Pergament-Looks und Hinzufügung der Lesbarkeits-Optimierungen */
+            background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment');
+            background-size: cover;
+            background-color: #f8f0e3; /* Hellbeige für Pergament-Effekt */
+            border: 1px solid #7a6b5a;
+            border-radius: 5px;
+            padding: 10px;
+            white-space: pre-wrap; /* Behält Zeilenumbrüche bei */
+            overflow: hidden; /* Für den Schreibeffekt */
+
+            /* Optimierung der Lesbarkeit */
+            font-family: 'Georgia', serif; /* Eine klassische, gut lesbare Serifenschrift */
+            font-size: 1.05em; /* Etwas größer für bessere Lesbarkeit */
+            line-height: 1.6; /* Für besseren Zeilenabstand */
+            color: #f0e6c8; /* Cremefarben für besseren Kontrast auf dunklem Hintergrund */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Leichter Schatten für "Tiefe" */
+        }
 
         .details-title {
-            font-family: 'Cinzel Decorative', serif;
-            font-size: 1.8rem;
-            color: gold;
-            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
             border-bottom: 1px solid #4a3b2a;
             padding-bottom: 10px;
             margin-bottom: 15px;
@@ -294,22 +355,6 @@
         .message-box button:hover {
             background: linear-gradient(to bottom, #a0815e, #6a5b4a);
             transform: translateY(-1px);
-        }
-
-        /* Neue Stile für den Ansichtsmodus (Read-only) */
-        .read-only-text {
-            background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment'); /* Beispiel Pergament-Hintergrund */
-            background-size: cover;
-            background-color: #f8f0e3; /* Hellbeige für Pergament-Effekt */
-            color: #4a3b2a; /* Dunkelbraune Schrift auf Pergament */
-            border: 1px solid #7a6b5a;
-            border-radius: 5px;
-            padding: 10px;
-            font-family: 'IM Fell English SC', serif;
-            font-size: 1rem; /* Slightly larger font size for readability */
-            line-height: 1.5;
-            white-space: pre-wrap; /* Behält Zeilenumbrüche bei */
-            overflow: hidden; /* Für den Schreibeffekt */
         }
 
         /* Footer style */
@@ -497,10 +542,10 @@
                     <input type="text" id="questRewardInput" class="editable-field" placeholder="Belohnung für die Quest">
 
                     <select id="questStatusSelect" class="editable-field">
-                        <option value="Aktiv">Aktiv</option>
-                        <option value="Abgeschlossen">Abgeschlossen</option>
-                        <option value="Fehlgeschlagen">Fehlgeschlagen</option>
-                        <option value="Folgequest">Folgequest</option> <!-- Neuer Status -->
+                        <option value="aktiv">Aktiv</option>
+                        <option value="abgeschlossen">Abgeschlossen</option>
+                        <option value="fehlgeschlagen">Fehlgeschlagen</option>
+                        <option value="folgequest">Folgequest</option> <!-- Neuer Status -->
                     </select>
 
                     <!-- Buttons für Aktionen im Bearbeitungsmodus -->
@@ -741,7 +786,7 @@
                     const previouslySelected = quests.find(q => q.id === selectedQuestId);
                     const initialSelectableQuest = isEditMode
                         ? (previouslySelected || quests[0])
-                        : (previouslySelected || quests.find(q => q.status === 'Aktiv' || q.status === 'Abgeschlossen'));
+                        : (previouslySelected || quests.find(q => q.status === 'aktiv' || q.status === 'abgeschlossen')); // Status kleingeschrieben
 
                     if (initialSelectableQuest) {
                         selectQuest(initialSelectableQuest.id);
@@ -764,7 +809,7 @@
                                 description: 'Finde Mankriks Frau, sie ist irgendwo in den Brachlanden verloren gegangen. Sie wurde zuletzt in der Nähe der Road in The Barrens gesehen. Sieh dich in der Nähe der Oasen um.',
                                 objectives: ['Finde Mankriks Frau (0/1)'],
                                 reward: '20 Silbermünzen, 100 Ruf bei der Horde',
-                                status: 'Aktiv',
+                                status: 'aktiv', // Kleingeschrieben
                                 createdAt: new Date().toISOString(),
                                 order: 0 // Neues Feld
                             },
@@ -773,7 +818,7 @@
                                 description: 'Die Gegend um Durotar ist von Wildschweinen überrannt. Bring uns ihre Stoßzähne als Beweis.',
                                 objectives: ['Erlege 10 Wildschweine (10/10)', 'Sammle 10 Stoßzähne (10/10)'],
                                 reward: '35 Silbermünzen, Lederhandschuhe',
-                                status: 'Abgeschlossen',
+                                status: 'abgeschlossen', // Kleingeschrieben
                                 createdAt: new Date().toISOString(),
                                 order: 1 // Neues Feld
                             },
@@ -782,7 +827,7 @@
                                 description: 'Ein alter Druide sprach von seltsamen Vorkommnissen tief im Wald von Elwynn. Untersuche die Quelle der Verderbnis.',
                                 objectives: ['Finde die Quelle der Verderbnis (0/1)', 'Berichte dem Druiden (0/1)'],
                                 reward: 'Leichter Heiltrank, 50 Ruf bei der Allianz',
-                                status: 'Folgequest',
+                                status: 'folgequest', // Kleingeschrieben
                                 createdAt: new Date().toISOString(),
                                 order: 2 // Neues Feld
                             }
@@ -851,7 +896,7 @@
                 let itemClasses = `quest-item ${quest.id === selectedQuestId ? 'selected' : ''}`;
 
                 // Im Ansichtsmodus "Folgequests" abblenden und nicht klickbar machen
-                if (!isEditMode && quest.status === 'Folgequest') {
+                if (!isEditMode && quest.status === 'folgequest') { // Status kleingeschrieben
                     itemClasses += ' dimmed-quest'; // Klasse für visuellen Effekt
                 }
 
@@ -871,11 +916,14 @@
 
                 questItem.innerHTML = `
                     <div class="quest-item-title">${quest.title}</div>
-                    <div class="quest-item-status">Status: ${quest.status}</div>
+                    <div class="quest-item-status status-${quest.status}">${quest.status.charAt(0).toUpperCase() + quest.status.slice(1)}</div>
                 `;
+                // Setzt die Klasse status-aktiv, status-abgeschlossen etc.
+                // und zeigt den Status mit Großbuchstaben am Anfang an (z.B. "Aktiv")
+
 
                 // Event Listener nur hinzufügen, wenn im Bearbeitungsmodus ODER wenn keine "Folgequest" im Ansichtsmodus
-                if (isEditMode || (quest.status !== 'Folgequest' && quest.status !== 'Ausgeblendet')) {
+                if (isEditMode || (quest.status !== 'folgequest' && quest.status !== 'ausgeblendet')) { // Status kleingeschrieben
                     questItem.addEventListener('click', () => selectQuest(quest.id));
                 }
 
@@ -923,7 +971,7 @@
             }
 
             // Im Ansichtsmodus: Wenn es eine "Folgequest" ist, nicht die Details anzeigen
-            if (!isEditMode && quest.status === 'Folgequest') {
+            if (!isEditMode && quest.status === 'folgequest') { // Status kleingeschrieben
                 clearQuestDetails();
                 showMessageBox('Diese Quest ist noch nicht aktiv. Du kannst nur den Titel sehen.');
                 selectedQuestId = null; // Verhindert die visuelle Auswahl in der Liste
@@ -949,7 +997,7 @@
                         return typeText(roObjectivesContainer, objectivesText); // Für Ziele
                     })
                     .then(() => typeText(roReward, quest.reward)) // Für Belohnung
-                    .then(() => typeText(roStatus, quest.status)); // Für Status
+                    .then(() => typeText(roStatus, quest.status.charAt(0).toUpperCase() + quest.status.slice(1))); // Status mit Großbuchstaben
             }
             renderQuestList(); // Liste aktualisieren, um Auswahl hervorzuheben
             updateUIForMode(); // UI-Elemente basierend auf dem Modus aktualisieren
@@ -970,7 +1018,7 @@
                 questDescriptionTextarea.value = '';
                 questObjectivesTextarea.value = '';
                 questRewardInput.value = '';
-                questStatusSelect.value = 'Aktiv';
+                questStatusSelect.value = 'aktiv'; // Status kleingeschrieben
             } else { // Read-only mode
                 detailsTitleReadOnly.textContent = 'Wähle eine Quest';
                 roDescription.textContent = '';
@@ -997,7 +1045,7 @@
                     description: 'Dies ist eine brandneue Quest. Bearbeite die Details!',
                     objectives: ['Erstes Ziel (0/1)'],
                     reward: 'Unbekannt',
-                    status: 'Aktiv',
+                    status: 'aktiv', // Kleingeschrieben
                     createdAt: new Date().toISOString(), // Timestamp hinzufügen
                     order: maxOrder + 1 // Reihenfolge festlegen
                 };
@@ -1048,14 +1096,16 @@
                 await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuestData, { merge: true });
 
                 // --- Optimistische UI-Aktualisierung ---
-                // Lokales Quest-Objekt aktualisieren
-                const localQuestIndex = quests.findIndex(q => q.id === selectedQuestId);
-                if (localQuestIndex !== -1) {
-                    quests[localQuestIndex] = { ...quests[localQuestIndex], ...updatedQuestData };
+                // Finde das lokal aktualisierte Quest-Objekt und aktualisiere es.
+                // onSnapshot wird den Zustand sowieso kurz darauf synchronisieren, aber dies gibt sofortiges Feedback.
+                const localQuest = quests.find(q => q.id === selectedQuestId);
+                if (localQuest) {
+                    Object.assign(localQuest, updatedQuestData); // Aktualisiere das bestehende Objekt
                 }
                 // UI sofort aktualisieren
                 renderQuestList();
-                selectQuest(selectedQuestId); // Details aktualisieren
+                // Selectiere die Quest erneut, um die Detailansicht mit den neuen Werten zu füllen
+                selectQuest(selectedQuestId);
 
                 showMessageBox('Änderungen gespeichert!');
             } catch (e) {
@@ -1123,7 +1173,7 @@
             } else if (criteria === 'titleDesc') {
                 quests.sort((a, b) => b.title.localeCompare(a.title));
             } else if (criteria === 'status') {
-                const statusOrder = { 'Aktiv': 1, 'Fehlgeschlagen': 2, 'Folgequest': 3, 'Abgeschlossen': 4 }; // Priorität
+                const statusOrder = { 'aktiv': 1, 'fehlgeschlagen': 2, 'folgequest': 3, 'abgeschlossen': 4 }; // Priorität, Status kleingeschrieben
                 quests.sort((a, b) => {
                     const statusA = statusOrder[a.status] || 99;
                     const statusB = statusOrder[b.status] || 99;
@@ -1247,7 +1297,12 @@
                 isEditMode = true;
                 passwordInput.value = ''; // Passwortfeld leeren
                 updateUIForMode();
-                selectQuest(selectedQuestId); // Details im Edit-Modus neu laden
+                // Sicherstellen, dass nach dem Login eine Quest ausgewählt ist, um Details anzuzeigen.
+                if (quests.length > 0 && selectedQuestId === null) {
+                    selectQuest(quests[0].id);
+                } else if (selectedQuestId !== null) {
+                    selectQuest(selectedQuestId); // Details im Edit-Modus neu laden
+                }
                 showMessageBox('Bearbeitungsmodus aktiviert! Du kannst Quests jetzt ziehen und ablegen.');
             } else {
                 showMessageBox('Falsches Passwort!');
@@ -1260,6 +1315,19 @@
             isEditMode = false;
             passwordInput.value = ''; // Passwortfeld leeren
             updateUIForMode();
+            // Sicherstellen, dass die Ansicht korrekt ist, auch wenn keine Quest ausgewählt ist.
+            if (selectedQuestId === null && quests.length > 0) {
+                 // Versuche, die erste aktive/abgeschlossene Quest auszuwählen.
+                const firstSelectable = quests.find(q => q.status === 'aktiv' || q.status === 'abgeschlossen');
+                if (firstSelectable) {
+                    selectQuest(firstSelectable.id);
+                } else {
+                    clearQuestDetails();
+                    detailsTitleReadOnly.textContent = 'Keine sichtbaren Quests zum Anzeigen.';
+                }
+            } else if (selectedQuestId !== null) {
+                selectQuest(selectedQuestId); // Details im Read-only-Modus neu laden
+            }
             showMessageBox('Das Questlog schließt sich und kehrt in den Ansichtsmodus zurück.');
             // Hier könntest du die Sichtbarkeit des Hauptfensters steuern, z.B.
             // document.querySelector('.questlog-window').style.display = 'none';
