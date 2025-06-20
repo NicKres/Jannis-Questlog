@@ -103,13 +103,29 @@
             text-align: center;
             position: relative;
         }
+        /* Neue Styles für die Questlog-Überschrift */
+        .quest-log-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
 
-        .header-title {
-            font-family: 'Cinzel Decorative', serif; /* Spezielle Schrift für den Titel */
-            font-size: 2.2rem; /* Große Schriftgröße */
+        .quest-log-title h1 {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 2.2rem;
             color: gold;
             text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
             letter-spacing: 2px;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .quest-log-title h2 {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.4rem;
+            color: #e0c880; /* Hellerer Goldton für Untertitel */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            margin: 0;
+            line-height: 1.2;
         }
 
         /* Stil für den Schließen-Button im Header */
@@ -287,7 +303,7 @@
         /* Generelle Anpassung für den Haupttext in Quest-Details */
         .read-only-text {
             /* Beibehaltung des Pergament-Looks und Hinzufügung der Lesbarkeits-Optimierungen */
-            background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment'); /* Beispiel Pergament-Hintergrund - kann entfernt werden, wenn Pergament-Container-Hintergrund ausreicht */
+            /* background-image: url('https://placehold.co/400x200/f8f0e3/4a3b2a?text=Parchment'); REMOVED */
             background-size: cover;
             background-color: #f8f0e3; /* Hellbeige für Pergament-Effekt */
             border: 1px solid #7a6b5a;
@@ -559,7 +575,10 @@
 
         <!-- Header-Bereich des Questlogs -->
         <div class="questlog-header">
-            <span class="header-title">Questlog</span>
+            <div class="quest-log-title">
+                <h1>Die Chroniken von Alenia</h1>
+                <h2>Das letzte Abenteuer des Champions</h2>
+            </div>
             <button class="close-button" id="closeButton">X</button>
         </div>
 
