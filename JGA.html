@@ -1032,24 +1032,36 @@
 
             showLoading();
             try {
-                const updatedQuest = {
+                const updatedQuestData = { // Umbenannt, um Konflikt zu vermeiden
                     title: questTitleInput.value,
                     description: questDescriptionTextarea.value,
                     objectives: questObjectivesTextarea.value.split('\n').filter(line => line.trim() !== ''),
                     reward: questRewardInput.value,
                     status: questStatusSelect.value,
-                    updatedAt: new Date().toISOString() // Timestamp aktualisieren
+                    updatedAt: new Date().toISOString()
                 };
-                // Stelle sicher, dass die Order-Eigenschaft nicht verloren geht, wenn sie vorhanden ist
+
                 const existingQuest = quests.find(q => q.id === selectedQuestId);
+                // Stelle sicher, dass die Order-Eigenschaft erhalten bleibt oder gesetzt wird
                 if (existingQuest && existingQuest.order !== undefined) {
-                    updatedQuest.order = existingQuest.order;
-                } else if (updatedQuest.order === undefined) {
-                     updatedQuest.order = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) + 1 : 0;
+                    updatedQuestData.order = existingQuest.order;
+                } else {
+                    // Weise eine neue Order-Nummer zu, falls nicht vorhanden
+                    updatedQuestData.order = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) + 1 : 0;
                 }
 
+                await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuestData, { merge: true });
 
-                await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuest, { merge: true });
+                // --- Optimistische UI-Aktualisierung ---
+                // Lokales Quest-Objekt aktualisieren
+                const localQuestIndex = quests.findIndex(q => q.id === selectedQuestId);
+                if (localQuestIndex !== -1) {
+                    quests[localQuestIndex] = { ...quests[localQuestIndex], ...updatedQuestData };
+                }
+                // UI sofort aktualisieren
+                renderQuestList();
+                selectQuest(selectedQuestId); // Details aktualisieren
+
                 showMessageBox('Änderungen gespeichert!');
             } catch (e) {
                 console.error("Fehler beim Speichern der Änderungen: ", e);
