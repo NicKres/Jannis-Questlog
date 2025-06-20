@@ -599,14 +599,39 @@
 
         // Firebase Initialisierung
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        let firebaseConfig = {};
+        try {
+            // Versuch, die von der Umgebung bereitgestellte __firebase_config zu parsen
+            const envFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            // Mit einer Standardstruktur zusammenführen, um sicherzustellen, dass projectId existiert
+            firebaseConfig = {
+                apiKey: envFirebaseConfig.apiKey || "YOUR_API_KEY", // Platzhalter
+                authDomain: envFirebaseConfig.authDomain || "YOUR_PROJECT_ID.firebaseapp.com",
+                projectId: envFirebaseConfig.projectId || "your-default-project-id", // Sicherstellen, dass projectId immer gesetzt ist
+                storageBucket: envFirebaseConfig.storageBucket || "YOUR_PROJECT_ID.appspot.com",
+                messagingSenderId: envFirebaseConfig.messagingSenderId || "YOUR_MESSAGING_SENDER_ID",
+                appId: envFirebaseConfig.appId || "YOUR_APP_ID"
+            };
+        } catch (e) {
+            console.error("Fehler beim Parsen von __firebase_config:", e);
+            showMessageBox("Fehler: Firebase Konfiguration konnte nicht geladen werden. Bitte stellen Sie sicher, dass __firebase_config korrekt ist.");
+            // Fallback auf eine Dummy-Konfiguration, wenn das Parsen fehlschlägt
+            firebaseConfig = {
+                apiKey: "dummy-api-key",
+                authDomain: "dummy-project.firebaseapp.com",
+                projectId: "dummy-project-id",
+                storageBucket: "dummy-project.appspot.com",
+                messagingSenderId: "dummy-sender-id",
+                appId: "dummy-app-id"
+            };
+        }
 
         let app;
         let db;
         let auth;
         let currentUserId = null;
         let questCollectionRef;
-        let isFirebaseReady = false; // Flag to indicate Firebase is ready
+        let isFirebaseReady = false; // Flag, das anzeigt, ob Firebase bereit ist
 
         /**
          * Zeigt eine Ladeanzeige an.
