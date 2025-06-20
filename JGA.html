@@ -312,10 +312,6 @@
             overflow: hidden; /* Für den Schreibeffekt */
         }
 
-        .read-only-text.typing-effect {
-            /* Dies wird von JavaScript animiert */
-        }
-
         /* Footer style */
         .questlog-footer {
             background-color: #3a2b1a; /* Darker brown, subtle */
@@ -624,7 +620,8 @@
             appId: "1:689308532820:web:0523701ea7c790a8c6adc1", // ERSETZT
             measurementId: "DEINE_MEASUREMENT_ID" // OPTIONAL: ERSETZE DIES, falls du Google Analytics nutzt
         };
-        // Für GitHub Pages verwenden wir die projectId als appId für den Datenpfad, um Konsistenz zu gewährleisten.
+        // FÜR GITHUB PAGES: Verwende die projectId aus firebaseConfig direkt als appId
+        // um Konsistenz mit dem Firestore-Pfad und den Regeln herzustellen.
         const appId = firebaseConfig.projectId;
 
 
@@ -676,10 +673,8 @@
                 auth = getAuth(app);
 
                 // Firestore-Sammlung für öffentliche Quests
-                // Wir verwenden eine feste "appId" wie "wow-questlog-shared" für GitHub Pages
-                // da die Canvas-spezifische __app_id dort nicht verfügbar ist.
-                const githubAppId = "wow-questlog-shared"; // This will be the base collection ID for all shared quests
-                questCollectionRef = collection(db, `artifacts/${githubAppId}/public/data/quests`);
+                // Der Pfad verwendet nun direkt die projectId als appId.
+                questCollectionRef = collection(db, `artifacts/${appId}/public/data/quests`);
 
                 // Authentifizierung
                 onAuthStateChanged(auth, async (user) => {
