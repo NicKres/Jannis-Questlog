@@ -605,7 +605,7 @@
             const envFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
             // Mit einer Standardstruktur zusammenführen, um sicherzustellen, dass projectId existiert
             firebaseConfig = {
-                apiKey: envFirebaseConfig.apiKey || "YOUR_API_KEY", // Platzhalter
+                apiKey: envFirebaseConfig.apiKey || "", // API-Schlüssel auf leere Zeichenkette gesetzt
                 authDomain: envFirebaseConfig.authDomain || "YOUR_PROJECT_ID.firebaseapp.com",
                 projectId: envFirebaseConfig.projectId || "your-default-project-id", // Sicherstellen, dass projectId immer gesetzt ist
                 storageBucket: envFirebaseConfig.storageBucket || "YOUR_PROJECT_ID.appspot.com",
@@ -617,7 +617,7 @@
             showMessageBox("Fehler: Firebase Konfiguration konnte nicht geladen werden. Bitte stellen Sie sicher, dass __firebase_config korrekt ist.");
             // Fallback auf eine Dummy-Konfiguration, wenn das Parsen fehlschlägt
             firebaseConfig = {
-                apiKey: "dummy-api-key",
+                apiKey: "", // Auch hier leer lassen
                 authDomain: "dummy-project.firebaseapp.com",
                 projectId: "dummy-project-id",
                 storageBucket: "dummy-project.appspot.com",
