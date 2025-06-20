@@ -3,1312 +3,543 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Die Chroniken von Alenia</title>
-    <!-- Tailwind CSS CDN für schnelle Styling-Grundlagen -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts für einen Fantasy-Look -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica:ital@0;1&family=Georgia&family=Lancelot&display=swap" rel="stylesheet">
+    <title>Jannis Questlog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- Basis & Fonts --- */
+        /* --- Globale Stile & Schriftarten --- */
+        :root {
+            --font-title: 'Cinzel Decorative', serif;
+            --font-text: 'IM Fell Double Pica', serif;
+            --color-gold: #ffd100;
+            --color-text: #3a2a1a;
+            --color-text-header: #f0d890;
+            --color-highlight: #ffb900;
+            
+            /* URLs für UI-Assets - Diese werden für das finale Design benötigt */
+            --bg-image: url('https://images.alphacoders.com/488/48812.jpg');
+            --parchment-texture: url('https://wow.zamimg.com/images/textures/parchment/parchmenttexture.png');
+            --questlog-border: url('https://wow.zamimg.com/images/tools/dragonflight-talent-calc/quest-details-bg.png');
+            --highlight-texture: url('https://wow.zamimg.com/images/QuestFrame/UI-QuestLog-Highlight.png');
+            --button-bg: url('https://wow.zamimg.com/images/classic/buttons/button-down.png');
+            --button-hover-bg: url('https://wow.zamimg.com/images/classic/buttons/button-up.png');
+
+            /* Icons */
+            --icon-book: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANiSURBVFhH7ZfNTxNBFMfvzMzuui3QAraEhqhAYwkfHggePHvA05N48uCJB6+ePAkngsQTiYfEgQdPQiQeKiFRhAapgNgW2gJpaCTW3WXn92Z2gVrqi/Ek/STdmdn3ffPNN/O+gGD8LzQfE9fP5d0W/NVoNOrv6Gi52Wz+xGq16uPj43eBHx4eXiAQCDo2NnYdDod/BvL6+vp9Mpn8Zzab/R1gLpe7mM/n32O5XG4YjUY/D+RyuV00Gv08k8lsxuPxgQDX6/WWiH0+HyIWi2F3dxfX19fc39/H6upqNpvNJQDEx8cjPz8fWVlZGB4exp6eHiwvL4uFhYVNs9msxuOxgwD+GmC1WpGVlYXc3FxkZ2djbW0NKSkpSEpKwsLCwsvhcPjE6/V+BdgLBAKqVCr14XA4fJ3P5w8D+O0AYjAY4Pf7kZGRgZSUFLi7u2Nzc5Pj4+O3gZxtgFarxZycHFy/fh3l5eXQ6/VoNBpwcHDA9vZ2kcvl3g2YvAAKhQKJiYlwc3NDfn4+CgoKMDc3x8XFRdTrdXcCZg8gIiICRUVF8Pn8kJaWBp/Ph9vtxu/3w+v1wuFwBPzu7i7u7u4+BsyZAJ/Ph8zMTABAampqwDAMotEopqeneHt7E4lE4syBtACkpqZi9+7d2N3dFQuFglEUhSAIAqfTiV6vx+l0EgBYLBYoFApsNhsAYLVaIZfL4fF4AIDX64VYLEagoCA0NzcjJycHSUlJGB0dxdjYGADg9/vR3t5O5HI5mBUApKenIxqNUlVVlWAwGGz2L4xGowgEAvB4PABAa2srDocDj8eDnZ0dDA4OAgDOzs7i8vISqampGFwB+L2G4+Pj4u7uLiYnJ6murmZmZubdAMkDmJ2dRVFREezt7REXF4e8vDxMTU2J3W7n/v5+oKurK7PZ7AMAnZ2dODs7O/12u32SyyW32w0A+Hy+dFEUAgA8Hg8uLi5cLpf/DGDY0dGB4uJifHx8MDAwQGVlJWfOnDm32Wz2e+vr68VisfhmgFarxcrKClZWVnB0dEQkEkFcXBxmZmaYn5+Hm5sbe3t74jeb8Xg8yWQyiMVi2NraIhwOMzg4CCcnJ0iSRKvV4vj4mGvXrsHHxwfT09Pw8PCgWq1SqVTqG4fD4e9Nphk//gYxYyT+9oD8GAAAAABJRU5ErkJggg==');
+            --icon-active: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACUSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
+            --icon-completed: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
+            --icon-failed: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEaSURBVDhPlZPLSwNREMa/e0+9VdSiQhC8CKpFEREhhJAUu3QhkEDQjUN3riR0q22CLu1KBBG6UFFa0B/Qh7R39zPj3Tgj2tJccI9n5jHzzXwzC1EURYhIlmU4juP9iYjjeZ5834fneWIhhBBCSKKUJMlyv2/b5iIiGo1G4jjeF3zbtoQQAAB4nodpmrb9Ps9CKSWKomjzPO9eKaVerwshhLXW+b4vxhgYY/s+M1prKcUYwzRNlVKEEKSU0pzzv/496zRNIQRhGEZGKaW11jmngL/gLvgd1f6y/yrLMsYYY5zTlBLP84DvgL9hN5/n+b4PIdS+70IIKeUiIhQKhXvvewE/A5/C17Gv/w8ghBDGGE3TTBsEAUDvPICcO31jGAAAAABJRU5ErkJggg==');
+            --icon-follow-up: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACJSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
+        }
+
         body {
-            margin: 0;
-            padding: 0;
-            /* Hintergrundbild des gesamten Bildschirms, WoW-ähnlich */
-            /* BLP-Datei im Gethe-Repo: Interface/Background/UI-Background-Tile.blp */
-            /* Konvertiere BLP zu PNG/JPG und setze hier den Link deines gehosteten Bildes ein: */
-            /* background-image: url('DEINE_KONVERTIERTE_UI_BACKGROUND_TILE_URL_HIER.png'); */
-            background-color: #1a1a1a; /* Dunkler Fallback-Hintergrund */
-            background-size: cover; /* Passt das Bild an den gesamten Viewport an */
+            background-image: var(--bg-image);
+            background-size: cover;
             background-position: center;
-            background-attachment: fixed; /* Hintergrund scrollt nicht mit */
+            background-attachment: fixed;
+            font-family: var(--font-text);
+            color: var(--color-text);
+            margin: 0;
+            padding: 2rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Sorgt für Full-Height */
+            min-height: 100vh;
             box-sizing: border-box;
-            font-family: 'IM Fell Double Pica', serif; /* Standard-Schrift für Fließtext */
-            color: #f0e6c8; /* Heller Standardtext für den Browser-Body */
-            overflow: hidden; /* Verhindert Scrollbalken am Body */
         }
 
-        /* --- Questlog Container (Das Hauptfenster) --- */
-        .quest-log-container {
+        /* --- Questlog Fenster --- */
+        .questlog-container {
+            width: 100%;
+            max-width: 960px;
+            height: 80vh;
+            min-height: 600px;
+            max-height: 720px;
+            border-style: solid;
+            border-width: 26px 26px 26px 26px;
+            -moz-border-image: var(--questlog-border) 26 26 26 26 repeat;
+            -webkit-border-image: var(--questlog-border) 26 26 26 26 repeat;
+            -o-border-image: var(--questlog-border) 26 26 26 26 repeat;
+            border-image: var(--questlog-border) 26 26 26 26 fill repeat;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
-            width: 90vw; /* 90% der Viewport-Breite */
-            max-width: 960px; /* Max-Breite wie im WoW-UI üblich (Referenzbild-Proportion) */
-            height: 85vh; /* 85% der Viewport-Höhe */
-            max-height: 720px; /* Max-Höhe, typisch für WoW Fenster (Referenzbild-Proportion) */
-            min-width: 650px; /* Mindestbreite, damit das Layout nicht zerbricht */
-            min-height: 500px; /* Mindesthöhe */
-
-            /* WoW Fensterrahmen-Effekt - Simuliert durch Rahmen und Schatten */
-            /* Wenn du UI-QuestLog-Frame.blp konvertiert hast, könntest du es hier als Haupt-Hintergrund versuchen. */
-            /* background-image: url('DEINE_KONVERTIERTE_UI_QUESTLOG_FRAME_URL_HIER.png'); */
-            background-color: #f7e6b7; /* Hellerer Pergament-Ton als Basis (CSS-Fallback) */
-            background-image: radial-gradient(circle at 50% 0, rgba(255,255,255,0.1) 0%, transparent 70%),
-                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.1) 0%, transparent 70%),
-                              radial-gradient(circle at 100% 100%, rgba(255,255,255,0.1) 0%, transparent 70%),
-                              radial-gradient(circle at 50% 100%, rgba(0,0,0,0.1) 0%, transparent 70%); /* Dezenter Verlauf für Tiefe */
-            border: 2px solid #3d3d3d; /* Dunkelgrauer Rahmen */
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), inset 0 0 10px rgba(0, 0, 0, 0.5);
-            position: relative; /* Für interne Positionierungen */
-            overflow: hidden; /* Wichtig, damit Inhalte nicht über den Rahmen hinausgehen */
-            /* Globale Pergament-Textfarbe und Schatten für den Container-Inhalt */
-            color: #5a3b1a; /* Dunklerer Pergament-Text */
-            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5); /* Leichter weißer Textschatten für Lesbarkeit */
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* --- Header --- */
+        .questlog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            position: relative;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            color: var(--color-text-header);
+            font-family: var(--font-title);
+            margin-top: -10px; /* Kompensiert den oberen Border-Bereich */
+            margin-left: -5px;
+            margin-right: -5px;
         }
 
-        /* --- Scrollbar Styling für das Hauptfenster (Webkit-Browser) --- */
-        .quest-log-container::-webkit-scrollbar {
-            width: 12px;
+        .questlog-header h1 {
+            font-size: 24px;
+            margin: 0;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
-        .quest-log-container::-webkit-scrollbar-track {
-            background: #3a322a; /* Dunkle Spur */
-            border-radius: 10px;
-        }
-        .quest-log-container::-webkit-scrollbar-thumb {
-            background: #6a5d4a; /* Dunkles Holz */
-            border-radius: 6px;
-            border: 2px solid #4a3e2a;
-        }
-        .quest-log-container::-webkit-scrollbar-thumb:hover {
-            background: #8a7d6a;
-        }
-
-        /* --- Oberer Header des Questlogs --- */
-        .quest-log-header {
+        
+        .header-left {
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* Elemente links beginnen */
-            padding: 8px 15px; /* Etwas weniger Padding */
-            background-color: #1a1a1a; /* Dunkler Balken wie im WoW-UI */
-            border-bottom: 2px solid #4a3e2a; /* Trennlinie */
-            flex-shrink: 0; /* Verhindert Schrumpfen des Headers */
-            user-select: none; /* Verhindert Textauswahl, wie im UI */
-            cursor: grab; /* Zeigt an, dass man es ziehen könnte (optional) */
         }
-        .header-icon {
-            width: 28px; /* Kleineres Icon */
-            height: 28px;
-            /* PNG-Datei im BrettMCoding-Repo: https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/inv_misc_book_04.png */
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/inv_misc_book_04.png');
+
+        .header-left .book-icon {
+            width: 32px;
+            height: 32px;
+            background-image: var(--icon-book);
             background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
-        .header-title {
-            font-family: 'Cinzel Decorative', serif; /* WoW-Titel-Schrift */
-            font-size: 1.5em; /* Etwas kleiner als zuvor, wie im Referenzbild */
-            color: #ffd100; /* Goldgelb */
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-            flex-grow: 1; /* Nimmt verfügbaren Platz ein */
-            text-align: center; /* Zentriert den Titel im Header */
-            margin-right: -40px; /* Korrektur für Icon-Platz */
-        }
-        .header-info {
-            font-family: 'IM Fell Double Pica', serif;
-            font-size: 0.9em; /* Kleiner */
-            color: #a0a0a0; /* Grauton */
-            white-space: nowrap;
-            margin-left: auto; /* Schiebt es ganz nach rechts */
-            padding-right: 15px; /* Abstand zum Rand */
-        }
-        .header-map-button {
-            font-family: 'IM Fell Double Pica', serif;
-            font-size: 0.9em;
-            color: #ffd100;
-            cursor: pointer;
-            text-decoration: underline; /* Unterstrichen wie im UI */
-            white-space: nowrap;
-            padding: 0 5px; /* Kleinerer Klickbereich */
-        }
-        .header-map-button:hover {
-            color: #ffffff; /* Heller bei Hover */
+            margin-right: 15px;
         }
 
-        /* --- Hauptbereich (Linke Liste & Rechte Details) --- */
-        .quest-log-main {
+        .header-right span, .header-left span {
+             font-size: 16px;
+        }
+
+
+        /* --- Hauptinhalt --- */
+        .questlog-main {
+            flex-grow: 1;
             display: flex;
-            flex-grow: 1; /* Nimmt den restlichen Platz ein */
-            overflow: hidden; /* Wichtig für interne Scrollbarkeit */
-            background-color: rgba(0, 0, 0, 0.1); /* Ein dezenter Hintergrund für den Main-Bereich */
-            border-bottom: 2px solid #4a3e2a; /* Trennlinie zum Footer */
+            background-image: var(--parchment-texture);
+            background-color: #e4d8b8;
+            padding: 15px;
+            gap: 15px;
+            overflow: hidden;
+            margin: 0 -10px -10px -10px; /* Füllt den Raum bis zur Border */
         }
-
-        /* --- Linke Quest-Liste --- */
+        
+        /* --- Quest Liste (Links) --- */
         .quest-list-panel {
-            width: 35%; /* Wie im Referenzbild */
-            /* BLP-Datei im Gethe-Repo: Interface/QuestFrame/UI-QuestLog-Frame.blp */
-            /* Konvertiere BLP zu PNG/JPG und setze hier den Link ein. Das Bild muss wiederholbar sein oder groß genug. */
-            /* background-image: url('DEINE_KONVERTIERTE_UI_QUESTLOG_FRAME_URL_HIER.png'); */
-            background-color: rgba(0, 0, 0, 0.15); /* Fallback/dezenter Hintergrund */
-            background-size: cover; /* Passt das Bild an */
-            background-position: center;
-            background-repeat: no-repeat; /* Oder 'repeat-y' je nach Bild */
-            border-right: 2px solid #4a3e2a; /* Vertikale Trennlinie zwischen den Panels */
+            width: 35%;
+            min-width: 250px;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Für internes Scrollen */
-        }
-        .quest-list-scroll {
-            flex-grow: 1;
-            overflow-y: auto; /* Scrollen innerhalb der Quest-Liste */
-            padding: 10px 15px; /* Innenabstand */
-            box-sizing: border-box;
+            overflow-y: auto;
+            padding-right: 10px;
         }
 
-        /* --- Rechte Quest-Detailansicht --- */
-        .quest-detail-panel {
-            width: 65%; /* Restliche Breite */
-            /* BLP-Datei im Gethe-Repo: Interface/QuestFrame/UI-QuestLog-Frame-Right.blp */
-            /* Konvertiere BLP zu PNG/JPG und setze hier den Link ein. Das Bild muss wiederholbar sein oder groß genug. */
-            /* background-image: url('DEINE_KONVERTIERTE_UI_QUESTLOG_FRAME_RIGHT_URL_HIER.png'); */
-            background-color: rgba(0, 0, 0, 0.15); /* Fallback/dezenter Hintergrund */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat; /* Oder 'repeat-y' je nach Bild */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Für internes Scrollen */
+        .quest-category {
+            font-family: var(--font-title);
+            color: var(--color-text);
+            font-size: 16px;
+            margin-bottom: 10px;
         }
-        .quest-detail-scroll {
-            flex-grow: 1;
-            overflow-y: auto; /* Scrollen innerhalb der Details */
-            padding: 15px 25px; /* Etwas mehr Padding rechts wie im Bild */
-            box-sizing: border-box;
-        }
-
-        /* --- Scrollbar Styling für interne Panels (Webkit-Browser) --- */
-        .quest-list-scroll::-webkit-scrollbar,
-        .quest-detail-scroll::-webkit-scrollbar {
-            width: 10px;
-        }
-        .quest-list-scroll::-webkit-scrollbar-track,
-        .quest-detail-scroll::-webkit-scrollbar-track {
-            background: #2a2a2a; /* Dunkle Spur */
-        }
-        .quest-list-scroll::-webkit-scrollbar-thumb,
-        .quest-detail-scroll::-webkit-scrollbar-thumb {
-            background: #5a4b3d; /* Dunkles Holz */
-            border-radius: 5px;
-            border: 1px solid #3a322a;
-        }
-        .quest-list-scroll::-webkit-scrollbar-thumb:hover,
-        .quest-detail-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #7a6e5a;
-        }
-
-        /* --- Styles für einzelne Quest-Items in der Liste --- */
+        
         .quest-item {
             display: flex;
             align-items: center;
-            padding: 6px 8px; /* Weniger Padding */
-            margin-bottom: 3px; /* Weniger Abstand */
+            padding: 8px 5px;
             cursor: pointer;
-            white-space: nowrap; /* Titel in einer Zeile halten */
-            overflow: hidden;
-            text-overflow: ellipsis; /* ... wenn zu lang */
-            font-family: 'IM Fell Double Pica', serif;
-            color: #5a3b1a; /* Dunklerer Text für Liste (wie im Bild) */
-            font-size: 0.95em;
+            font-size: 15px;
             position: relative;
-            transition: background-color 0.1s ease-out; /* Schnelleres Highlight */
-        }
-        .quest-item .quest-status {
-            width: 20px; /* Kleinere Icons in der Liste wie im Bild */
-            height: 20px;
-            flex-shrink: 0;
-            margin-right: 5px; /* Weniger Abstand */
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            text-indent: -9999px; /* Verstecke den Textinhalt des Icons */
-            overflow: hidden;
-        }
-
-        /* --- Spezifische Icons für jeden Status in der Liste (aus BrettMCoding/QuestLog) --- */
-        .quest-item.aktiv .quest-status {
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/quest_exclamation.png'); /* Gelbes Ausrufezeichen */
-        }
-        .quest-item.abgeschlossen .quest-status {
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/quest_question_grey.png'); /* Graues Fragezeichen */
-        }
-        .quest-item.fehlgeschlagen .quest-status {
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/quest_skull.png'); /* Schädel */
-        }
-        .quest-item.folgequest .quest-status {
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/quest_question.png'); /* Gelbes Fragezeichen für neue Quests */
-        }
-
-        /* Text für Quest-Item in der Liste */
-        .quest-item-title {
-            color: #4a3e2a; /* Dunklerer Braunton */
-            font-weight: normal; /* Normaler Font-Weight */
-            flex-grow: 1; /* Nimmt restlichen Platz ein */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* --- Hervorhebung (Hover & Ausgewählt) --- */
-        .quest-item:hover {
-            background-color: rgba(90, 75, 55, 0.3); /* Dezenter, transparenter Braunton beim Hover */
-        }
-        .quest-item.selected {
-            /* BLP-Datei im Gethe-Repo: Interface/QuestFrame/UI-QuestLog-Highlight.blp */
-            /* Konvertiere BLP zu PNG/JPG und setze hier den Link ein: */
-            /* background-image: url('DEINE_KONVERTIERTE_UI_QUESTLOG_HIGHLIGHT_URL_HIER.png'); */
-            background-size: 100% 100%; /* Das Bild soll den gesamten Bereich füllen */
-            background-repeat: no-repeat;
-            background-color: rgba(90, 75, 55, 0.5); /* Intensiverer Braunton für ausgewählte Quest (CSS-Fallback) */
-            border-color: gold; /* Goldener Rand */
-            box-shadow: 0 0 5px gold, inset 0 0 5px rgba(255, 215, 0, 0.6);
-            color: #ffd100; /* Heller Text für ausgewählte Quest */
-            font-weight: bold; /* Fetter Text */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8); /* Schatten für besseren Kontrast */
-        }
-        /* Auch der Icon-Farbeffekt beim Selected-Zustand */
-        .quest-item.selected .quest-item-title {
-            color: #ffd100; /* Goldgelb für ausgewählten Titel */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        .quest-item:hover, .quest-item.active {
+            color: white;
+            text-shadow: 1px 1px 2px black;
         }
 
-        /* --- Styles für den Quest-Detailbereich --- */
-        #selected-quest-content {
-            font-family: 'IM Fell Double Pica', serif;
-            color: #5a3b1a; /* Dunklerer Text auf Pergament */
-            line-height: 1.5; /* Etwas weniger Zeilenabstand */
-            text-shadow: 0.5px 0.5px 0.5px rgba(255, 255, 255, 0.5); /* Heller Schatten */
+        .quest-item::before { /* Highlight-Effekt */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: var(--highlight-texture);
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: -1;
         }
-        .detail-title {
-            font-family: 'Cinzel Decorative', serif; /* Großer Titel im Detailbereich */
-            font-size: 1.8em; /* Größe wie im Referenzbild */
-            color: #4a3e2a; /* Dunkler Braunton */
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            margin-bottom: 15px;
-            white-space: normal; /* Erlaubt Zeilenumbrüche, wie im Referenzbild */
-            overflow: visible; /* Zeigt den ganzen Text */
-            text-overflow: clip; /* Keine Ellipse */
+        
+        .quest-item:hover::before, .quest-item.active::before {
+            opacity: 1;
         }
-        .detail-description, .detail-action, .detail-reward, .detail-note {
-            margin-bottom: 12px; /* Etwas weniger Abstand */
-            font-size: 0.95em; /* Leicht kleiner als Standardtext */
-        }
-        .detail-reward-item { /* Belohnungseinträge */
-            display: flex;
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(74, 62, 42, 0.3);
-            padding: 5px 10px;
-            border-radius: 3px;
-            margin-top: 8px;
-        }
-        .reward-icon {
-            width: 24px; /* Kleinere Icons */
-            height: 24px;
-            /* PNG-Datei im BrettMCoding-Repo: https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/inv_misc_bag_12.png */
-            background-image: url('https://raw.githubusercontent.com/BrettMCoding/QuestLog/master/app/resources/assets/interface/icons/inv_misc_bag_12.png');
+
+        .quest-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
             background-size: contain;
             background-repeat: no-repeat;
-            margin-right: 8px;
-        }
-        .reward-text {
-            font-weight: bold;
-            color: #ffd100;
-            font-size: 0.9em;
-        }
-
-        /* --- Unterer Footer mit Buttons --- */
-        .quest-log-footer {
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 20px;
-            background-color: #1a1a1a;
-            border-top: 2px solid #4a3e2a;
             flex-shrink: 0;
         }
-        .footer-button {
-            background-color: #3a322a;
-            color: #f0e6c8;
-            border: 1px solid #5a4b3d;
-            padding: 6px 12px; /* Kleinere Buttons */
-            border-radius: 4px;
+
+        .icon-active { background-image: var(--icon-active); }
+        .icon-completed { background-image: var(--icon-completed); filter: grayscale(1); }
+        .icon-follow-up { background-image: var(--icon-follow-up); }
+        .icon-failed { background-image: var(--icon-failed); }
+
+        .quest-level {
+            margin-left: auto;
+            font-style: italic;
+            color: #887a61;
+        }
+        .quest-item:hover .quest-level, .quest-item.active .quest-level {
+            color: #e0d0b0;
+        }
+
+        /* --- Quest Details (Rechts) --- */
+        .quest-detail-panel {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            line-height: 1.6;
+        }
+
+        .quest-detail-panel h2 {
+            font-family: var(--font-title);
+            font-size: 20px;
+            color: var(--color-text);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .quest-detail-panel h3 {
+            font-family: var(--font-title);
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        /* --- Footer --- */
+        .questlog-footer {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 10px 15px 15px;
+            margin-bottom: -12px; /* Kompensiert den unteren Border-Bereich */
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        
+        .questlog-button {
+            padding: 8px 18px;
+            font-family: var(--font-text);
+            font-size: 14px;
+            color: var(--color-gold);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            border: 2px solid #5a4a3a;
+            border-radius: 5px;
+            background-color: #3a2a1a;
             cursor: pointer;
-            font-family: 'IM Fell Double Pica', serif;
-            font-size: 0.85em;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 3px rgba(0,0,0,0.5);
-            white-space: nowrap; /* Button-Text in einer Zeile */
-        }
-        .footer-button:hover {
-            background-color: #5a4b3d;
-            color: #ffffff;
-        }
-        .footer-button:active {
-            background-color: #2a2a2a;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.7);
+            transition: all 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* --- Hidden-Klasse --- */
-        .hidden {
-            display: none !important;
+        .questlog-button:hover {
+            color: white;
+            border-color: var(--color-gold);
+        }
+        
+        /* --- Scrollbar Styling (für Chrome/Safari) --- */
+        ::-webkit-scrollbar {
+            width: 14px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ab9b7d;
+            border-left: 1px solid #7c6c4d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5a4a3a;
+            border: 1px solid #3a2a1a;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c6c4d;
         }
 
-        /* --- Drag-and-Drop Styles --- */
-        .quest-item.dragging {
-            opacity: 0.4;
-            border: 2px dashed #d4af37; /* Gold dashed border when dragging */
+        /* --- Modal für Sprüche / Passwort --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-image: var(--parchment-texture);
+            background-color: #e4d8b8;
+            padding: 30px;
+            border: 10px solid transparent;
+            border-image: var(--questlog-border) 26 26 26 26 fill repeat;
+            max-width: 500px;
+            text-align: center;
+            font-size: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 {
+            font-family: var(--font-title);
+            margin-top: 0;
+        }
+        .modal-content input {
+            padding: 10px;
+            font-family: var(--font-text);
+            font-size: 16px;
+            width: 80%;
+            margin: 15px 0;
+            border: 2px solid #5a4a3a;
+            background-color: #fff;
+        }
+        .modal-buttons {
+            margin-top: 20px;
         }
 
-        .quest-item.drag-over {
-            border: 2px solid dodgerblue; /* Blue border when dragged over */
-            transform: scale(1.02);
-        }
-
-        /* --- Responsive Anpassungen (für kleinere Bildschirme) --- */
+        /* --- Responsive Design --- */
         @media (max-width: 768px) {
-            .quest-log-container {
-                width: 98vw; /* Füllt fast die ganze Breite */
-                height: 98vh; /* Füllt fast die ganze Höhe */
-                min-width: unset; /* Keine Mindestbreite mehr */
-                min-height: unset; /* Keine Mindesthöhe mehr */
-                border-radius: 0; /* Keine Rundung an den Ecken auf Mobile */
+            body {
+                padding: 0;
+                background-image: none;
+                background-color: #1a1a1a;
             }
-            .quest-log-header {
-                padding: 5px 8px;
+            .questlog-container {
+                width: 100%;
+                height: 100vh;
+                max-height: none;
+                border-width: 15px;
+                min-height: 0;
             }
-            .header-icon {
-                width: 24px;
-                height: 24px;
-                font-size: 1.2em;
-            }
-            .header-title {
-                font-size: 1.3em;
-            }
-            .header-info, .header-map-button {
-                font-size: 0.8em;
-            }
-            .quest-log-main {
-                flex-direction: column; /* Panels untereinander auf kleinen Bildschirmen */
-            }
-            .quest-list-panel, .quest-detail-panel {
-                width: 100%; /* Nehmen volle Breite ein */
-                border: none; /* Keine Ränder zwischen den Panels */
-                border-radius: 0;
-                margin-bottom: 0; /* Kein zusätzlicher Abstand */
+            .questlog-main {
+                flex-direction: column;
             }
             .quest-list-panel {
-                height: 40vh; /* Liste nimmt 40% der Höhe ein */
-                max-height: unset; /* Keine Max-Höhe hier */
+                width: 100%;
+                height: 40%; /* Mehr Platz für die Liste auf Mobilgeräten */
+                min-width: 0;
+                padding-right: 0;
             }
             .quest-detail-panel {
-                height: 60vh; /* Details nehmen 60% der Höhe ein */
+                height: 60%;
             }
-            .quest-list-scroll, .quest-detail-scroll {
-                padding: 8px;
-            }
-            .quest-item {
-                font-size: 0.9em;
-                padding: 5px 8px;
-            }
-            .quest-item .quest-status {
-                width: 16px;
-                height: 16px;
-                font-size: 0.9em;
-            }
-            .detail-title {
-                font-size: 1.5em;
-            }
-            .detail-description, .detail-action, .detail-reward {
-                font-size: 0.9em;
-            }
-            .footer-button {
-                font-size: 0.75em;
-                padding: 5px 10px;
+            .questlog-header h1 {
+                font-size: 20px;
             }
         }
+
     </style>
 </head>
 <body>
-    <div class="quest-log-container">
-        <!-- Loading Overlay -->
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="spinner"></div>
-            <p>Lade Quests...</p>
-        </div>
 
-        <div class="quest-log-header">
-            <div class="header-icon"></div> <!-- Icon wird per CSS gesetzt -->
-            <div class="header-title">Quest Log</div>
-            <div class="header-info">Quests: <span id="quests-count">0/0</span></div>
-            <div class="header-map-button">Show Map</div>
-            <!-- Schließen-Button in den Header verschoben, da die Überschrift eine eigene Struktur ist -->
-            <button class="close-button" id="closeButton">X</button>
-        </div>
+    <div class="questlog-container">
+        <!-- Header -->
+        <header class="questlog-header">
+            <div class="header-left">
+                <div class="book-icon"></div>
+                <span id="quest-counter">Quests: 3/25</span>
+            </div>
+            <h1>Quest Log</h1>
+            <div class="header-right">
+                <span>Show Map</span>
+            </div>
+        </header>
 
-        <!-- Sortierungsoptionen (Nur sichtbar im Bearbeitungsmodus) -->
-        <div id="sortPanel" class="p-4 bg-gray-700 border-b border-gray-600 flex flex-wrap justify-end items-center gap-4 hidden">
-            <label for="sortCriteria" class="text-gold-300">Sortieren nach:</label>
-            <select id="sortCriteria" class="editable-field w-auto min-w-[150px]">
-                <option value="titleAsc">Titel (A-Z)</option>
-                <option value="titleDesc">Titel (Z-A)</option>
-                <option value="status">Status</option>
-                <option value="customOrder">Benutzerdefinierte Reihenfolge</option>
-            </select>
-            <button id="sortButton" class="action-button">Sortieren</button>
-        </div>
-
-        <div class="quest-log-main">
+        <!-- Hauptinhalt -->
+        <main class="questlog-main">
+            <!-- Linke Seite: Quest Liste -->
             <div class="quest-list-panel">
-                <div class="quest-list-scroll" id="quest-list-scroll">
-                    <!-- Quests werden hier dynamisch eingefügt -->
-                </div>
-            </div>
-
-            <div class="quest-detail-panel">
-                <div class="quest-detail-scroll" id="quest-detail-scroll">
-                    <div id="selected-quest-content">
-                        <h3 class="detail-title">Willkommen im Quest Log!</h3>
-                        <p class="detail-description">Wähle eine Quest aus der Liste auf der linken Seite, um Details über deine Missionen zu erfahren.</p>
-                        <p class="detail-action"><b>Aktion:</b><br>Wähle eine Quest.</p>
-                        <p class="detail-reward"><b>Belohnung:</b><br>Wähle eine Quest.</p>
-                        <p class="detail-note"><b>Anmerkung:</b> Wähle eine Quest.</p>
+                <div id="quest-list-content">
+                    <!-- Statische Beispiele. Dies wird dynamisch befüllt. -->
+                    <div class="quest-item active" data-quest-id="1">
+                        <div class="quest-icon icon-active"></div>
+                        <span>Der Ruf des Champions</span>
+                        <span class="quest-level">(JGA)</span>
+                    </div>
+                    <div class="quest-item" data-quest-id="2">
+                        <div class="quest-icon icon-follow-up"></div>
+                        <span>Arkane Reagenzien</span>
+                        <span class="quest-level">(Vorbereitung)</span>
+                    </div>
+                     <div class="quest-item" data-quest-id="3">
+                        <div class="quest-icon icon-completed"></div>
+                        <span>Die Reise zur Mondlichtung</span>
+                        <span class="quest-level">(Abgeschlossen)</span>
+                    </div>
+                    <div class="quest-item" data-quest-id="4">
+                        <div class="quest-icon icon-failed"></div>
+                        <span>Eine fehlgeschlagene Eskorte</span>
+                        <span class="quest-level">(Fehlgeschlagen)</span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="quest-log-footer">
-            <button class="footer-button">Abandon</button>
-            <button class="footer-button">Share</button>
-            <button class="footer-button">Track</button>
-            <!-- Passwort-Panel in den Footer verschoben -->
-            <div id="passwordPanel" class="password-panel ml-auto">
-                <label for="passwordInput" class="text-gold-300 text-sm font-bold">Passwort für Bearbeitung:</label>
-                <input type="password" id="passwordInput" class="password-input" placeholder="Passwort">
-                <button id="enterEditModeButton" class="action-button-small">Login</button>
+            <!-- Rechte Seite: Quest Details -->
+            <div class="quest-detail-panel" id="quest-detail-content">
+                 <!-- Wird per JS befüllt -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="questlog-footer">
+            <button class="questlog-button" id="abandon-btn">Abandon</button>
+            <button class="questlog-button" id="share-btn">Share</button>
+            <button class="questlog-button" id="track-btn">Track</button>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="abandon-modal" class="modal">
+        <div class="modal-content">
+            <p id="abandon-quote"></p>
+            <div class="modal-buttons">
+                <button class="questlog-button" onclick="closeModal('abandon-modal')">Schließen</button>
             </div>
         </div>
     </div>
 
-    <!-- Meldungsbox für Bestätigungen/Fehler -->
-    <div id="messageBox" class="message-box">
-        <p id="messageText"></p>
-        <button id="messageBoxCloseButton">OK</button>
+    <div id="track-modal" class="modal">
+        <div class="modal-content">
+            <h3>Spielmaster-Login</h3>
+            <p>Bitte Passwort eingeben, um die Quest zu verwalten.</p>
+            <input type="password" id="admin-password" placeholder="Passwort...">
+            <div class="modal-buttons">
+                <button class="questlog-button" id="admin-login-btn">Bestätigen</button>
+                <button class="questlog-button" onclick="closeModal('track-modal')">Abbrechen</button>
+            </div>
+        </div>
     </div>
 
-    <script type="module">
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // DOM-Elemente abrufen
-        const questListScrollElement = document.getElementById('quest-list-scroll');
-        const selectedQuestContentElement = document.getElementById('selected-quest-content');
-        const questsCountElement = document.getElementById('quests-count');
-        const questDetailScrollElement = document.getElementById('quest-detail-scroll');
-
-
-        // Passwort und Modus-Steuerung
-        const passwordInput = document.getElementById('passwordInput');
-        const enterEditModeButton = document.getElementById('enterEditModeButton');
-        const passwordPanel = document.getElementById('passwordPanel');
-        const correctPassword = 'HomoComo'; // Das festgelegte Passwort
-
-        // Sortierungs-Elemente
-        const sortCriteriaSelect = document.getElementById('sortCriteria');
-        const sortButton = document.getElementById('sortButton');
-        const sortPanel = document.getElementById('sortPanel');
-
-        // Allgemeine Elemente
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const messageBoxCloseButton = document.getElementById('messageBoxCloseButton');
-        const closeButton = document.getElementById('closeButton');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-
-        let quests = []; // Hier werden die aus Firebase geladenen Quests gespeichert
-        let selectedQuestId = null; // ID der aktuell ausgewählten Quest
-        let isEditMode = false; // Steuert den Modus (Bearbeiten vs. Nur-Ansicht)
-        let typingTimeout; // Für den Schreibeffekt
-        let draggedItem = null; // Aktuell gezogenes Element für Drag-and-Drop
-
-        // Firebase Initialisierung
-        const firebaseConfig = {
-            apiKey: "AIzaSyChyA0KQQMG0M4SnaHIdxwguJH8dYYDO-w",
-            authDomain: "wowquestlogprojekt.firebaseapp.com",
-            projectId: "wowquestlogprojekt",
-            storageBucket: "wowquestlogprojekt.firebasestorage.app",
-            messagingSenderId: "689308532820",
-            appId: "1:689308532820:web:0523701ea7c790a8c6adc1",
-            measurementId: "G-XXXXXXXXXX" // OPTIONAL: Ersetze dies durch deine Measurement ID, falls du Google Analytics nutzt
+    <script>
+        // Statische Daten für den Prototyp
+        const quests = {
+            1: {
+                title: "Der Ruf des Champions",
+                description: "Ein mysteriöser Brief erreicht dich, Champion Alenia. Eine dringende Aufgabe wartet auf dich. Die Mächte Azeroths haben dich auserwählt, eine Reihe von Prüfungen zu bestehen, die deinen Mut, deine Weisheit und deine Ausdauer auf die Probe stellen werden.<br><br>Dein Abenteuer beginnt an dem Ort, den du Heimat nennst. Bereite dich vor, denn dies ist nur der Anfang einer legendären Reise.",
+                tasks: "Begib dich unverzüglich zum Startpunkt deiner Reise.",
+                reward: "Karte zur Mondlichtung, Erste Anweisungen des Spielmasters."
+            },
+            2: {
+                title: "Arkane Reagenzien",
+                description: "Um die bevorstehenden Herausforderungen zu meistern, musst du eine Reihe von arkanen Reagenzien sammeln. Diese Gegenstände sind für die Rituale notwendig, die dich stärken und leiten werden.<br><br>Suche nach den Komponenten, die auf deiner Liste stehen. Sie sind für deine Reise unerlässlich.",
+                tasks: "Sammle alle Gegenstände für das JGA-Wochenende.",
+                reward: "Gefüllter Reisebeutel."
+            },
+            3: {
+                title: "Die Reise zur Mondlichtung",
+                description: "Du hast die ersten Vorbereitungen getroffen. Nun ist es an der Zeit, zur sagenumwobenen Mondlichtung (Bad Teinach) aufzubrechen. Ein Ort der Ruhe und Kraft, an dem die nächsten Prüfungen auf dich warten.",
+                tasks: "Reise sicher zur Unterkunft in Bad Teinach.",
+                reward: "Erholung und ein stärkendes Mahl."
+            },
+            4: {
+                title: "Eine fehlgeschlagene Eskorte",
+                description: "Du wurdest beauftragt, einen wichtigen NPC zu eskortieren, aber die Gefahren der Wildnis waren zu groß. Der NPC wurde von Murlocs überrannt.<br><br>Diese Quest ist gescheitert. Manchmal kann selbst ein Champion nicht jeden retten.",
+                tasks: "Mission fehlgeschlagen.",
+                reward: "Keine. Ein bitterer Beigeschmack der Niederlage."
+            }
         };
-        const appId = firebaseConfig.projectId; // FÜR GITHUB PAGES: Verwende die projectId als appId
 
+        const abandonQuotes = [
+            "Arise, my champion!",
+            "You are not prepared!",
+            "Tempest Keep was merely a setback.",
+            "By fire be purged!",
+            "LEEROOOY JENKINS!",
+            "Work is da poop! No more!",
+            "You no take candle!",
+            "Me not that kind of orc.",
+            "Stand in the fire, DPS is higher.",
+            "Less QQ, more pew pew.",
+            "Did you think we had forgotten? Did you think we had forgiven?",
+            "Time is money, friend.",
+            "Lok'tar ogar! Victory or death!",
+            "I'll rip the secrets from your flesh!",
+            "For the Horde!",
+            "For the Alliance!",
+            "That's a 50 DKP minus!",
+            "More DOTS! More DOTS!",
+            "Interest ya in a pint?",
+            "My strength is returning. Soon I will be whole again."
+        ];
 
-        let app;
-        let db;
-        let auth;
-        let currentUserId = null;
-        let questCollectionRef;
-        let isFirebaseReady = false; // Flag, das anzeigt, ob Firebase bereit ist
+        document.addEventListener('DOMContentLoaded', () => {
+            const questListContent = document.getElementById('quest-list-content');
+            const questDetailContent = document.getElementById('quest-detail-content');
 
-        /**
-         * Zeigt eine Ladeanzeige an.
-         */
-        function showLoading() {
-            loadingOverlay.style.display = 'flex';
-        }
-
-        /**
-         * Verbirgt die Ladeanzeige.
-         */
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
-        }
-
-        /**
-         * Zeigt eine Meldungsbox mit einer Nachricht an.
-         * @param {string} message - Die anzuzeigende Nachricht.
-         */
-        function showMessageBox(message) {
-            messageText.textContent = message;
-            messageBox.classList.add('show');
-        }
-
-        /**
-         * Verbirgt die Meldungsbox.
-         */
-        function hideMessageBox() {
-            messageBox.classList.remove('show');
-        }
-
-        /**
-         * Initialisiert Firebase und lädt Quests.
-         */
-        async function initializeFirebaseAndLoadQuests() {
-            showLoading();
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                questCollectionRef = collection(db, `artifacts/${appId}/public/data/quests`);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        // Überprüfe, ob userIdDisplay existiert, bevor textContent gesetzt wird
-                        if (userIdDisplay) {
-                           userIdDisplay.textContent = `User ID: ${currentUserId}`;
-                        }
-                        isFirebaseReady = true;
-                        loadQuestsFromFirebase();
-                    } else {
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (error) {
-                            console.error("Firebase Auth Error:", error);
-                            showMessageBox("Fehler bei der Authentifizierung: " + error.message);
-                            hideLoading();
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                showMessageBox("Fehler beim Initialisieren von Firebase: " + error.message);
-                hideLoading();
-            }
-        }
-
-        /**
-         * Lädt Quests von Firestore.
-         */
-        function loadQuestsFromFirebase() {
-            if (!isFirebaseReady) return;
-
-            onSnapshot(questCollectionRef, (snapshot) => {
-                const fetchedQuests = [];
-                snapshot.forEach(doc => {
-                    fetchedQuests.push({ id: doc.id, ...doc.data() });
-                });
-
-                quests = fetchedQuests.sort((a, b) => {
-                    const orderA = a.order !== undefined ? a.order : Number.MAX_SAFE_INTEGER;
-                    const orderB = b.order !== undefined ? b.order : Number.MAX_SAFE_INTEGER;
-                    if (orderA !== orderB) {
-                        return orderA - orderB;
-                    }
-                    return (a.createdAt || '').localeCompare(b.createdAt || '');
-                });
-
-                updateUIForMode();
-                renderQuestList();
-
-                const totalQuestsCount = quests.length;
-                const activeQuestsCount = quests.filter(q => q.status === 'aktiv').length;
-                questsCountElement.textContent = `${activeQuestsCount}/${totalQuestsCount}`;
-
-
-                if (quests.length > 0) {
-                    const previouslySelected = quests.find(q => q.id === selectedQuestId);
-                    const initialSelectableQuest = isEditMode
-                        ? (previouslySelected || quests[0])
-                        : (previouslySelected || quests.find(q => q.status === 'aktiv' || q.status === 'abgeschlossen'));
-
-                    if (initialSelectableQuest) {
-                        selectQuest(initialSelectableQuest.id);
-                    } else {
-                        clearQuestDetails(); // Statt direkter Zuweisung, die Funktion aufrufen
-                    }
-                } else {
-                    clearQuestDetails(); // Statt direkter Zuweisung, die Funktion aufrufen
-
-                    if (isEditMode) {
-                        const initialQuests = [
-                            {
-                                title: 'Die Suche nach Mankriks Frau',
-                                description: 'Finde Mankriks Frau, sie ist irgendwo in den Brachlanden verloren gegangen. Sie wurde zuletzt in der Nähe der Road in The Brachland gesehen. Sieh dich in der Nähe der Oasen um.',
-                                objectives: ['Finde Mankriks Frau (0/1)'],
-                                reward: '20 Silbermünzen, 100 Ruf bei der Horde',
-                                status: 'aktiv',
-                                action: 'Finde Mankriks Frau in den Brachlanden.',
-                                note: 'Achtung vor Stachelebern!',
-                                createdAt: new Date().toISOString(),
-                                order: 0
-                            },
-                            {
-                                title: 'Töte 10 Wildschweine',
-                                description: 'Die Gegend um Durotar ist von Wildschweinen überrannt. Bring uns ihre Stoßzähne als Beweis.',
-                                objectives: ['Erlege 10 Wildschweine (10/10)', 'Sammle 10 Stoßzähne (10/10)'],
-                                reward: '35 Silbermünzen, Lederhandschuhe',
-                                status: 'abgeschlossen',
-                                action: 'Sammle 10 Wildschwein-Stoßzähne von Wildschweinen in Durotar.',
-                                note: '',
-                                createdAt: new Date().toISOString(),
-                                order: 1
-                            },
-                            {
-                                title: 'Die Geheimnisse des dunklen Waldes',
-                                description: 'Ein alter Druide sprach von seltsamen Vorkommnissen tief im Wald von Elwynn. Untersuche die Quelle der Verderbnis.',
-                                objectives: ['Finde die Quelle der Verderbnis (0/1)', 'Berichte dem Druiden (0/1)'],
-                                reward: 'Leichter Heiltrank, 50 Ruf bei der Allianz',
-                                status: 'folgequest',
-                                action: 'Triff den Druiden in Elwynn Forest, um mehr zu erfahren.',
-                                note: 'Eventuell gefährlich!',
-                                createdAt: new Date().toISOString(),
-                                order: 2
-                            }
-                        ];
-
-                        initialQuests.forEach(async (q) => {
-                            try {
-                                await addDoc(questCollectionRef, q);
-                            } catch (e) {
-                                console.error("Fehler beim Hinzufügen der initialen Quest: ", e);
-                            }
-                        });
-                        showMessageBox('Initiale Quests hinzugefügt. Lade neu...');
-                    }
+            // Funktion zum Anzeigen von Quest-Details
+            function showQuestDetails(questId) {
+                const quest = quests[questId];
+                if (quest) {
+                    questDetailContent.innerHTML = `
+                        <h2>${quest.title}</h2>
+                        <p>${quest.description}</p>
+                        <h3>Aktion</h3>
+                        <p>${quest.tasks}</p>
+                        <h3>Belohnungen</h3>
+                        <p>${quest.reward}</p>
+                    `;
+                    // Aktiven Status in der Liste aktualisieren
+                    document.querySelectorAll('.quest-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`.quest-item[data-quest-id='${questId}']`).classList.add('active');
                 }
-                hideLoading();
-            }, (error) => {
-                console.error("Fehler beim Laden der Quests von Firestore:", error);
-                showMessageBox("Fehler beim Laden der Quests: " + error.message);
-                hideLoading();
+            }
+
+            // Event-Listener für Klicks auf Quest-Items
+            questListContent.addEventListener('click', (event) => {
+                const questItem = event.target.closest('.quest-item');
+                if (questItem) {
+                    const questId = questItem.dataset.questId;
+                    showQuestDetails(questId);
+                }
             });
-        }
 
-        /**
-         * Aktualisiert die Sichtbarkeit der UI-Elemente basierend auf dem aktuellen Modus.
-         */
-        function updateUIForMode() {
-            if (isEditMode) {
-                sortPanel.classList.remove('hidden');
-                passwordPanel.classList.add('hidden');
-            } else {
-                sortPanel.classList.add('hidden');
-                passwordPanel.classList.remove('hidden');
-            }
-        }
-
-        /**
-         * Rendert die Liste der Quests im linken Panel.
-         * Fügt Drag-and-Drop-Attribute und Listener hinzu.
-         */
-        function renderQuestList() {
-            questListScrollElement.innerHTML = '';
-            if (quests.length === 0) {
-                const noQuestsMsg = document.createElement('p');
-                noQuestsMsg.className = 'text-center text-gray-500 italic mt-4';
-                noQuestsMsg.textContent = 'Keine Quests vorhanden. Füge eine neue hinzu!';
-                questListScrollElement.appendChild(noQuestsMsg);
-                return;
-            }
-
-            quests.forEach(quest => {
-                const questItemDiv = document.createElement('div');
-                let itemClasses = `quest-item ${quest.status}`;
-                if (quest.id === selectedQuestId) {
-                    itemClasses += ' selected';
-                }
-
-                if (!isEditMode && quest.status === 'folgequest') {
-                    itemClasses += ' dimmed-quest';
-                }
-
-                questItemDiv.className = itemClasses;
-                questItemDiv.setAttribute('data-id', quest.id);
-
-                if (isEditMode) {
-                    questItemDiv.setAttribute('draggable', 'true');
-                    questItemDiv.addEventListener('dragstart', handleDragStart);
-                    questItemDiv.addEventListener('dragover', handleDragOver);
-                    questItemDiv.addEventListener('dragleave', handleDragLeave);
-                    questItemDiv.addEventListener('drop', handleDrop);
-                    questItemDiv.addEventListener('dragend', handleDragEnd);
-                }
-
-                let statusSymbol = '';
-                switch(quest.status) {
-                    case 'aktiv': statusSymbol = '!'; break;
-                    case 'abgeschlossen': statusSymbol = '?'; break;
-                    case 'fehlgeschlagen': statusSymbol = 'X'; break;
-                    case 'folgequest': statusSymbol = '?'; break;
-                    default: statusSymbol = '';
-                }
-
-                questItemDiv.innerHTML = `
-                    <div class="quest-status ${quest.status}">${statusSymbol}</div>
-                    <span class="quest-item-title">${quest.title}</span>
-                `;
-
-                if (isEditMode || (quest.status !== 'folgequest' && quest.status !== 'ausgeblendet')) {
-                    questItemDiv.addEventListener('click', () => selectQuest(quest.id));
-                }
-
-                questListScrollElement.appendChild(questItemDiv);
+            // Initial eine Quest anzeigen
+            showQuestDetails(1);
+            
+            // Button-Funktionen
+            document.getElementById('abandon-btn').addEventListener('click', () => {
+                const quote = abandonQuotes[Math.floor(Math.random() * abandonQuotes.length)];
+                document.getElementById('abandon-quote').innerText = quote;
+                openModal('abandon-modal');
             });
-        }
 
-        /**
-         * Implementiert einen Schreibeffekt für einen Text.
-         * @param {HTMLElement} element - Das HTML-Element, in das der Text geschrieben werden soll.
-         * @param {string} text - Der vollständige Text, der geschrieben werden soll.
-         * @param {number} delay - Verzögerung zwischen den Zeichen in ms.
-         * @returns {Promise<void>} - Ein Promise, das erfüllt wird, wenn der Schreibeffekt abgeschlossen ist.
-         */
-        function typeText(element, text, delay = 30) {
-            return new Promise(resolve => {
-                if (typingTimeout) clearTimeout(typingTimeout);
-                if (!element) {
-                    console.warn("Element für Schreibeffekt nicht gefunden:", element);
-                    resolve();
-                    return;
-                }
-                element.textContent = '';
-                let i = 0;
-                function type() {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                        typingTimeout = setTimeout(type, delay);
-                    } else {
-                        resolve();
-                    }
-                }
-                type();
+            document.getElementById('share-btn').addEventListener('click', () => {
+                const activeQuestTitle = document.querySelector('.quest-item.active span').innerText;
+                const text = encodeURIComponent(`Ich bin gerade auf einem epischen Quest-Abenteuer für meinen JGA! Schau dir meine aktuelle Aufgabe an: ${activeQuestTitle}`);
+                window.open(`https://wa.me/?text=${text}`, '_blank');
             });
-        }
 
-        /**
-         * Lädt die Details einer ausgewählten Quest in das rechte Panel.
-         * @param {Object} questData - Das Datenobjekt der Quest.
-         */
-        function loadQuestDetails(questData) {
-            let detailHtml = '';
-
-            if (isEditMode) {
-                detailHtml = `
-                    <h3 class="detail-title">${escapeHtml(questData.title)}</h3>
-                    <label for="questTitleInput" class="text-gold-300">Quest Titel:</label>
-                    <input type="text" id="questTitleInput" class="editable-field" placeholder="Quest Titel" value="${escapeHtml(questData.title)}">
-
-                    <label for="questDescriptionTextarea" class="text-gold-300">Beschreibung:</label>
-                    <textarea id="questDescriptionTextarea" class="editable-field" rows="6" placeholder="Beschreibung">${escapeHtml(questData.description)}</textarea>
-
-                    <label for="questObjectivesTextarea" class="text-gold-300">Ziele (eine pro Zeile):</label>
-                    <textarea id="questObjectivesTextarea" class="editable-field" rows="4" placeholder="Ziele (eine pro Zeile)">${escapeHtml(Array.isArray(questData.objectives) ? questData.objectives.join('\n') : '')}</textarea>
-
-                    <label for="questActionInput" class="text-gold-300">Aktion:</label>
-                    <input type="text" id="questActionInput" class="editable-field" placeholder="Aktion" value="${escapeHtml(questData.action || '')}">
-
-                    <label for="questRewardInput" class="text-gold-300">Belohnung:</label>
-                    <input type="text" id="questRewardInput" class="editable-field" placeholder="Belohnung für die Quest" value="${escapeHtml(questData.reward)}">
-
-                    <label for="questStatusSelect" class="text-gold-300">Status:</label>
-                    <select id="questStatusSelect" class="editable-field">
-                        <option value="aktiv" ${questData.status === 'aktiv' ? 'selected' : ''}>Aktiv</option>
-                        <option value="abgeschlossen" ${questData.status === 'abgeschlossen' ? 'selected' : ''}>Abgeschlossen</option>
-                        <option value="fehlgeschlagen" ${questData.status === 'fehlgeschlagen' ? 'selected' : ''}>Fehlgeschlagen</option>
-                        <option value="folgequest" ${questData.status === 'folgequest' ? 'selected' : ''}>Folgequest</option>
-                    </select>
-
-                    <label for="questNoteTextarea" class="text-gold-300">Anmerkung:</label>
-                    <textarea id="questNoteTextarea" class="editable-field" rows="2" placeholder="Anmerkung">${escapeHtml(questData.note || '')}</textarea>
-
-                    <div class="button-group">
-                        <button class="action-button" id="addQuestButton">Neue Quest</button>
-                        <button class="action-button" id="saveQuestButton">Änderungen speichern</button>
-                        <button class="action-button delete-button" id="deleteQuestButton">Quest löschen</button>
-                    </div>
-                `;
-            } else { // Read-only mode
-                const objectivesHtml = Array.isArray(questData.objectives) ? questData.objectives.map(obj => `<li>${escapeHtml(obj)}</li>`).join('') : '';
-
-                detailHtml = `
-                    <h3 class="detail-title">${escapeHtml(questData.title)}</h3>
-                    <p class="detail-description">${escapeHtml(questData.description)}</p>
-                    <p class="detail-action"><b>Aktion:</b><br>${escapeHtml(questData.action || 'Keine Aktion definiert.')}</p>
-                    <div class="read-only-section">
-                        <p class="font-bold text-lg text-gold-200">Ziele:</p>
-                        <div id="roObjectivesContainer" class="read-only-text">${objectivesHtml ? objectivesHtml : 'Keine Ziele definiert.'}</div>
-                    </div>
-                    <div class="read-only-section">
-                        <p class="font-bold text-lg text-gold-200">Belohnung:</p>
-                        <div class="detail-reward-item">
-                            <div class="reward-icon"></div> <!-- Icon per CSS gesetzt -->
-                            <span class="reward-text">${escapeHtml(questData.reward)}</span>
-                        </div>
-                    </div>
-                    <div class="read-only-section">
-                        <p class="font-bold text-lg text-gold-200">Status:</p>
-                        <p id="roStatus" class="read-only-text"></p>
-                    </div>
-                    ${questData.note ? `<div class="read-only-section"><p class="font-bold text-lg text-gold-200">Anmerkung:</p><p class="detail-note">${escapeHtml(questData.note)}</p></div>` : ''}
-                `;
-            }
-
-            selectedQuestContentElement.innerHTML = detailHtml;
-
-            // Nach dem Rendern der Elemente, Event-Listener neu zuweisen und Button-Status setzen
-            if (isEditMode) {
-                const addBtn = document.getElementById('addQuestButton');
-                const saveBtn = document.getElementById('saveQuestButton');
-                const deleteBtn = document.getElementById('deleteQuestButton');
-
-                if (addBtn) addBtn.addEventListener('click', addQuest);
-                if (saveBtn) saveBtn.addEventListener('click', saveQuestChanges);
-                if (deleteBtn) deleteBtn.addEventListener('click', deleteQuest);
-
-                const selected = selectedQuestId !== null;
-                if (saveBtn) saveBtn.disabled = !selected;
-                if (deleteBtn) deleteBtn.disabled = !selected;
-                if (addBtn) addBtn.disabled = false;
-            } else { // Read-only mode: Schreibeffekt triggern
-                const roDesc = selectedQuestContentElement.querySelector('.detail-description');
-                const roObjCont = selectedQuestContentElement.querySelector('#roObjectivesContainer');
-                const roRew = selectedQuestContentElement.querySelector('.reward-text');
-                const roStat = selectedQuestContentElement.querySelector('#roStatus');
-                const roAction = selectedQuestContentElement.querySelector('.detail-action');
-                const roNote = selectedQuestContentElement.querySelector('.detail-note');
-
-                if (roDesc) typeText(roDesc, questData.description);
-                if (roAction) typeText(roAction.querySelector('b').nextSibling, questData.action || 'Keine Aktion definiert.');
-                if (roObjCont) typeText(roObjCont, Array.isArray(questData.objectives) ? questData.objectives.map(obj => `• ${obj}`).join('\n') : 'Keine Ziele definiert.');
-                if (roRew) typeText(roRew, questData.reward);
-                if (roStat) typeText(roStat, questData.status.charAt(0).toUpperCase() + questData.status.slice(1));
-                if (roNote && questData.note) typeText(roNote.querySelector('b').nextSibling, questData.note);
-            }
-
-            questDetailScrollElement.scrollTop = 0;
-            renderQuestList();
-        }
-
-        /**
-         * Helferfunktion zum Escapen von HTML-Sonderzeichen in String-Werten.
-         * Verhindert XSS-Angriffe und stellt sicher, dass Texte korrekt angezeigt werden.
-         * @param {string} str - Der zu escapende String.
-         * @returns {string} Der escapte String.
-         */
-        function escapeHtml(str) {
-            if (typeof str !== 'string') return '';
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str));
-            return div.innerHTML;
-        }
-
-
-        /**
-         * Wählt eine Quest aus und zeigt ihre Details an.
-         * @param {string} id - Die ID der ausgewählten Quest.
-         */
-        function selectQuest(id) {
-            if (selectedQuestId) {
-                const prevSelectedItem = questListScrollElement.querySelector(`.quest-item[data-id="${selectedQuestId}"]`);
-                if (prevSelectedItem) {
-                    prevSelectedItem.classList.remove('selected');
-                }
-            }
-
-            selectedQuestId = id;
-            const quest = quests.find(q => q.id === id);
-
-            if (!quest) {
-                clearQuestDetails();
-                return;
-            }
-
-            if (!isEditMode && quest.status === 'folgequest') {
-                clearQuestDetails();
-                showMessageBox('Diese Quest ist noch nicht aktiv. Du kannst nur den Titel sehen.');
-                selectedQuestId = null;
-                renderQuestList();
-                return;
-            }
-
-            loadQuestDetails(quest);
-        }
-
-
-        /**
-         * Leert die Detailansicht und setzt sie auf den Willkommenszustand zurück.
-         */
-        function clearQuestDetails() {
-            if (typingTimeout) clearTimeout(typingTimeout);
-            selectedQuestId = null;
-
-            selectedQuestContentElement.innerHTML = `
-                <h3 class="detail-title">Willkommen im Quest Log!</h3>
-                <p class="detail-description">Wähle eine Quest aus der Liste auf der linken Seite, um Details über deine Missionen zu erfahren.</p>
-                <p class="detail-action"><b>Aktion:</b><br>Wähle eine Quest.</p>
-                <p class="detail-reward"><b>Belohnung:</b><br>Wähle eine Quest.</p>
-                <p class="detail-note"><b>Anmerkung:</b> Wähle eine Quest.</p>
-            `;
-
-            if (isEditMode) {
-                const tempButtonGroup = document.createElement('div');
-                tempButtonGroup.className = 'button-group';
-                tempButtonGroup.innerHTML = `
-                    <button class="action-button" id="addQuestButton">Neue Quest</button>
-                    <button class="action-button" id="saveQuestButton">Änderungen speichern</button>
-                    <button class="action-button delete-button" id="deleteQuestButton">Quest löschen</button>
-                `;
-                selectedQuestContentElement.appendChild(tempButtonGroup);
-
-                const addBtn = document.getElementById('addQuestButton');
-                const saveBtn = document.getElementById('saveQuestButton');
-                const deleteBtn = document.getElementById('deleteQuestButton');
-
-                if (addBtn) addBtn.addEventListener('click', addQuest);
-                if (saveBtn) saveBtn.addEventListener('click', saveQuestChanges);
-                if (deleteBtn) deleteBtn.addEventListener('click', deleteQuest);
-
-                if (saveBtn) saveBtn.disabled = true;
-                if (deleteBtn) deleteBtn.disabled = true;
-                if (addBtn) addBtn.disabled = false;
-            }
-
-            const prevSelectedItem = questListScrollElement.querySelector(`.quest-item.selected`);
-            if (prevSelectedItem) {
-                prevSelectedItem.classList.remove('selected');
-            }
-        }
-
-
-        /**
-         * Fügt eine neue leere Quest hinzu (in Firestore).
-         */
-        async function addQuest() {
-            if (!isFirebaseReady) {
-                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
-                return;
-            }
-            showLoading();
-            try {
-                const maxOrder = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) : -1;
-                const newQuest = {
-                    title: 'Neue Quest',
-                    description: 'Dies ist eine brandneue Quest. Bearbeite die Details!',
-                    objectives: ['Erstes Ziel (0/1)'],
-                    reward: 'Unbekannt',
-                    status: 'aktiv',
-                    action: 'Keine Aktion definiert',
-                    note: '',
-                    createdAt: new Date().toISOString(),
-                    order: maxOrder + 1
-                };
-                const docRef = await addDoc(questCollectionRef, newQuest);
-                selectedQuestId = docRef.id;
-                showMessageBox('Neue Quest hinzugefügt!');
-            } catch (e) {
-                console.error("Fehler beim Hinzufügen der Quest: ", e);
-                showMessageBox("Fehler beim Hinzufügen der Quest: " + e.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        /**
-         * Speichert die Änderungen an der aktuell ausgewählten Quest (in Firestore).
-         */
-        async function saveQuestChanges() {
-            if (!isFirebaseReady) {
-                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
-                return;
-            }
-            if (!selectedQuestId) {
-                showMessageBox('Bitte wähle eine Quest zum Speichern aus.');
-                return;
-            }
-
-            showLoading();
-            try {
-                const currentQuestTitleInput = document.getElementById('questTitleInput');
-                const currentQuestDescriptionTextarea = document.getElementById('questDescriptionTextarea');
-                const currentQuestObjectivesTextarea = document.getElementById('questObjectivesTextarea');
-                const currentQuestActionInput = document.getElementById('questActionInput');
-                const currentQuestRewardInput = document.getElementById('questRewardInput');
-                const currentQuestStatusSelect = document.getElementById('questStatusSelect');
-                const currentQuestNoteTextarea = document.getElementById('questNoteTextarea');
-
-
-                const updatedQuestData = {
-                    title: currentQuestTitleInput.value,
-                    description: currentQuestDescriptionTextarea.value,
-                    objectives: currentQuestObjectivesTextarea.value.split('\n').filter(line => line.trim() !== ''),
-                    action: currentQuestActionInput ? currentQuestActionInput.value : 'Keine Aktion definiert',
-                    reward: currentQuestRewardInput.value,
-                    status: currentQuestStatusSelect.value,
-                    note: currentQuestNoteTextarea ? currentQuestNoteTextarea.value : '',
-                    updatedAt: new Date().toISOString()
-                };
-
-                const existingQuest = quests.find(q => q.id === selectedQuestId);
-                if (existingQuest && existingQuest.order !== undefined) {
-                    updatedQuestData.order = existingQuest.order;
-                } else {
-                    updatedQuestData.order = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) + 1 : 0;
-                }
-
-                await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuestData, { merge: true });
-
-                const localQuest = quests.find(q => q.id === selectedQuestId);
-                if (localQuest) {
-                    Object.assign(localQuest, updatedQuestData);
-                }
-                renderQuestList();
-                selectQuest(selectedQuestId);
-
-                showMessageBox('Änderungen gespeichert!');
-            } catch (e) {
-                console.error("Fehler beim Speichern der Änderungen: ", e);
-                showMessageBox("Fehler beim Speichern der Änderungen: " + e.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        /**
-         * Löscht die aktuell ausgewählte Quest (in Firestore).
-         */
-        async function deleteQuest() {
-            if (!isFirebaseReady) {
-                showMessageBox("Firebase ist nicht bereit. Bitte warten Sie.");
-                return;
-            }
-            if (!selectedQuestId) {
-                showMessageBox('Bitte wähle eine Quest zum Löschen aus.');
-                return;
-            }
-
-            showMessageBox('Soll diese Quest wirklich gelöscht werden?');
-            messageBoxCloseButton.textContent = 'Ja';
-            const originalCloseHandler = messageBoxCloseButton.onclick;
-            messageBoxCloseButton.onclick = async () => {
-                showLoading();
-                try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId));
-                    selectedQuestId = null;
-                    showMessageBox('Quest gelöscht!');
-                } catch (e) {
-                    console.error("Fehler beim Löschen der Quest: ", e);
-                    showMessageBox("Fehler beim Löschen der Quest: " + e.message);
-                } finally {
-                    hideLoading();
-                    messageBoxCloseButton.textContent = 'OK';
-                    messageBoxCloseButton.onclick = originalCloseHandler;
-                }
-                hideMessageBox();
-            };
-
-            const cancelButton = document.createElement('button');
-            cancelButton.textContent = 'Nein';
-            cancelButton.className = 'action-button delete-button ml-2';
-            cancelButton.onclick = () => {
-                hideMessageBox();
-                messageBoxCloseButton.textContent = 'OK';
-                messageBoxCloseButton.onclick = originalCloseHandler;
-                cancelButton.remove();
-            };
-            messageBox.appendChild(cancelButton);
-        }
-
-        /**
-         * Sortiert die Quests basierend auf dem ausgewählten Kriterium (in memory).
-         */
-        function sortQuests() {
-            const criteria = sortCriteriaSelect.value;
-            if (criteria === 'titleAsc') {
-                quests.sort((a, b) => a.title.localeCompare(b.title));
-            } else if (criteria === 'titleDesc') {
-                quests.sort((a, b) => b.title.localeCompare(a.title));
-            } else if (criteria === 'status') {
-                const statusOrder = { 'aktiv': 1, 'fehlgeschlagen': 2, 'folgequest': 3, 'abgeschlossen': 4 };
-                quests.sort((a, b) => {
-                    const statusA = statusOrder[a.status] || 99;
-                    const statusB = statusOrder[b.status] || 99;
-                    if (statusA === statusB) {
-                        return a.title.localeCompare(b.title);
-                    }
-                    return statusA - statusB;
-                });
-            } else if (criteria === 'customOrder') {
-                // Bei "Benutzerdefinierte Reihenfolge" wird die initiale Sortierung nach "order" beibehalten.
-            }
-            renderQuestList();
-            showMessageBox('Quests sortiert!');
-        }
-
-        // --- Drag-and-Drop Funktionen ---
-        function handleDragStart(e) {
-            if (!isEditMode) return;
-            draggedItem = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', this.dataset.id);
-
-            setTimeout(() => {
-                this.classList.add('dragging');
-            }, 0);
-        }
-
-        function handleDragOver(e) {
-            if (!isEditMode) return;
-            e.preventDefault();
-            if (this !== draggedItem) {
-                this.classList.add('drag-over');
-            }
-        }
-
-        function handleDragLeave(e) {
-            if (!isEditMode) return;
-            this.classList.remove('drag-over');
-        }
-
-        async function handleDrop(e) {
-            if (!isEditMode) return;
-            e.preventDefault();
-            this.classList.remove('drag-over');
-
-            if (this !== draggedItem) {
-                const draggedId = e.dataTransfer.getData('text/plain');
-                const droppedOnId = this.dataset.id;
-
-                const draggedIndex = quests.findIndex(q => q.id === draggedId);
-                const droppedOnIndex = quests.findIndex(q => q.id === droppedOnId);
-
-                if (draggedIndex === -1 || droppedOnIndex === -1) {
-                    console.error("Fehler: Gezogenes oder Ziel-Element nicht gefunden.");
-                    showMessageBox("Fehler beim Verschieben der Quest.");
-                    return;
-                }
-
-                const [movedQuest] = quests.splice(draggedIndex, 1);
-                quests.splice(droppedOnIndex, 0, movedQuest);
-
-                await updateQuestOrderInFirestore();
-                showMessageBox('Reihenfolge der Quests aktualisiert!');
-            }
-        }
-
-        async function handleDragEnd(e) {
-            if (!isEditMode) return;
-            this.classList.remove('dragging');
-            document.querySelectorAll('.quest-item').forEach(item => {
-                item.classList.remove('drag-over');
+            document.getElementById('track-btn').addEventListener('click', () => {
+                openModal('track-modal');
             });
-            draggedItem = null;
-            renderQuestList();
-        }
-
-        /**
-         * Aktualisiert die 'order'-Eigenschaft aller Quests in Firestore.
-         */
-        async function updateQuestOrderInFirestore() {
-            if (!isFirebaseReady) {
-                showMessageBox("Firebase ist nicht bereit. Kann Reihenfolge nicht speichern.");
-                return;
-            }
-            showLoading();
-            try {
-                const batch = writeBatch(db);
-                quests.forEach((quest, index) => {
-                    const questDocRef = doc(db, `artifacts/${appId}/public/data/quests`, quest.id);
-                    batch.update(questDocRef, { order: index });
-                });
-                await batch.commit();
-            } catch (e) {
-                console.error("Fehler beim Speichern der neuen Quest-Reihenfolge: ", e);
-                showMessageBox("Fehler beim Speichern der Reihenfolge: " + e.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Event Listener initialisieren
-        messageBoxCloseButton.addEventListener('click', hideMessageBox);
-        sortButton.addEventListener('click', sortQuests);
-
-        enterEditModeButton.addEventListener('click', () => {
-            if (passwordInput.value === correctPassword) {
-                isEditMode = true;
-                passwordInput.value = '';
-                updateUIForMode();
-                if (quests.length > 0) {
-                    selectQuest(selectedQuestId || quests[0].id);
-                } else {
-                    clearQuestDetails();
-                }
-                showMessageBox('Bearbeitungsmodus aktiviert! Du kannst Quests jetzt ziehen und ablegen.');
-            } else {
-                showMessageBox('Falsches Passwort!');
-                passwordInput.value = '';
-            }
         });
 
-        closeButton.addEventListener('click', () => {
-            isEditMode = false;
-            passwordInput.value = '';
-            updateUIForMode();
-            if (quests.length > 0) {
-                const firstSelectable = quests.find(q => q.status === 'aktiv' || q.status === 'abgeschlossen');
-                if (firstSelectable) {
-                    selectQuest(firstSelectable.id);
-                } else {
-                    clearQuestDetails();
-                }
-            } else {
-                clearQuestDetails();
-            }
-            showMessageBox('Das Questlog schließt sich und kehrt in den Ansichtsmodus zurück.');
-        });
+        // Modal-Funktionen
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
 
-        document.addEventListener('DOMContentLoaded', initializeFirebaseAndLoadQuests);
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
     </script>
 </body>
 </html>
