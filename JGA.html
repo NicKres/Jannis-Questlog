@@ -404,6 +404,17 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Drag-and-Drop Styles */
+        .quest-item.dragging {
+            opacity: 0.4;
+            border: 2px dashed #d4af37; /* Gold dashed border when dragging */
+        }
+
+        .quest-item.drag-over {
+            border: 2px solid dodgerblue; /* Blue border when dragged over */
+            transform: scale(1.02);
+        }
+
 
         @media (max-width: 768px) {
             .questlog-content {
@@ -462,6 +473,7 @@
                 <option value="titleAsc">Titel (A-Z)</option>
                 <option value="titleDesc">Titel (Z-A)</option>
                 <option value="status">Status</option>
+                <option value="customOrder">Benutzerdefinierte Reihenfolge</option> <!-- Neue Option -->
             </select>
             <button id="sortButton" class="action-button">Sortieren</button>
         </div>
@@ -547,7 +559,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // DOM-Elemente abrufen
         const questListPanel = document.getElementById('questListPanel');
@@ -596,6 +608,7 @@
         let selectedQuestId = null; // ID der aktuell ausgewählten Quest
         let isEditMode = false; // Steuert den Modus (Bearbeiten vs. Nur-Ansicht)
         let typingTimeout; // Für den Schreibeffekt
+        let draggedItem = null; // Aktuell gezogenes Element für Drag-and-Drop
 
         // Firebase Initialisierung
         // HINWEIS: Wenn du den Code auf GitHub Pages hostest, musst du diese Konfiguration
@@ -703,12 +716,28 @@
         function loadQuestsFromFirestore() {
             if (!isFirebaseReady) return;
 
+            // Sortierung für das onSnapshot, standardmäßig nach 'order' und dann 'createdAt'
+            // WICHTIG: Firestore unterstützt keine 'orderBy' auf Feldern, die nicht indexiert sind,
+            // und empfiehlt, nicht zu viele Indizes zu erstellen.
+            // Die Sortierung nach 'order' ist am wichtigsten für Drag-and-Drop.
+            // Wenn 'order' nicht vorhanden ist, wird die Quest ans Ende verschoben.
             onSnapshot(questCollectionRef, (snapshot) => {
                 const fetchedQuests = [];
                 snapshot.forEach(doc => {
                     fetchedQuests.push({ id: doc.id, ...doc.data() });
                 });
-                quests = fetchedQuests; // Quests-Array aktualisieren
+
+                // Standardmäßige Sortierung nach 'order' (numerisch) und dann 'createdAt' (alphabetisch)
+                quests = fetchedQuests.sort((a, b) => {
+                    const orderA = a.order !== undefined ? a.order : Number.MAX_SAFE_INTEGER;
+                    const orderB = b.order !== undefined ? b.order : Number.MAX_SAFE_INTEGER;
+                    if (orderA !== orderB) {
+                        return orderA - orderB;
+                    }
+                    // Sekundäre Sortierung nach createdAt, falls order gleich ist oder fehlt
+                    return (a.createdAt || '').localeCompare(b.createdAt || '');
+                });
+
                 updateUIForMode(); // UI-Modus aktualisieren
                 renderQuestList(); // Liste neu rendern
 
@@ -731,9 +760,9 @@
                     detailsTitleReadOnly.textContent = 'Keine Quests zum Anzeigen.';
                     detailsTitleEditMode.textContent = 'Füge eine neue Quest hinzu!';
 
-                    // Wenn keine Quests vorhanden sind, fügen wir Initial-Quests hinzu (nur einmal).
+                    // Wenn keine Quests vorhanden sind, fügen wir Initial-Quests hinzu (nur einmal im Edit Mode).
                     // Dies sollte nur passieren, wenn die Firestore-Sammlung komplett leer ist.
-                    if (isEditMode && quests.length === 0) {
+                    if (isEditMode) {
                          const initialQuests = [
                             {
                                 title: 'Die Suche nach Mankriks Frau',
@@ -741,7 +770,8 @@
                                 objectives: ['Finde Mankriks Frau (0/1)'],
                                 reward: '20 Silbermünzen, 100 Ruf bei der Horde',
                                 status: 'Aktiv',
-                                createdAt: new Date().toISOString()
+                                createdAt: new Date().toISOString(),
+                                order: 0 // Neues Feld
                             },
                             {
                                 title: 'Töte 10 Wildschweine',
@@ -749,7 +779,8 @@
                                 objectives: ['Erlege 10 Wildschweine (10/10)', 'Sammle 10 Stoßzähne (10/10)'],
                                 reward: '35 Silbermünzen, Lederhandschuhe',
                                 status: 'Abgeschlossen',
-                                createdAt: new Date().toISOString()
+                                createdAt: new Date().toISOString(),
+                                order: 1 // Neues Feld
                             },
                             {
                                 title: 'Die Geheimnisse des dunklen Waldes',
@@ -757,19 +788,21 @@
                                 objectives: ['Finde die Quelle der Verderbnis (0/1)', 'Berichte dem Druiden (0/1)'],
                                 reward: 'Leichter Heiltrank, 50 Ruf bei der Allianz',
                                 status: 'Folgequest',
-                                createdAt: new Date().toISOString()
+                                createdAt: new Date().toISOString(),
+                                order: 2 // Neues Feld
                             }
                         ];
 
                         initialQuests.forEach(async (q) => {
                             try {
+                                // Verwende addDoc, um neue Dokumente mit Auto-ID zu erstellen.
                                 await addDoc(questCollectionRef, q);
                             } catch (e) {
                                 console.error("Fehler beim Hinzufügen der initialen Quest: ", e);
                             }
                         });
                         showMessageBox('Initiale Quests hinzugefügt. Lade neu...');
-                        // Nach dem Hinzufügen der initialen Quests wird onSnapshot erneut ausgelöst.
+                        // onSnapshot wird nach dem Hinzufügen der initialen Quests erneut ausgelöst.
                     }
                 }
                 hideLoading();
@@ -805,6 +838,7 @@
 
         /**
          * Rendert die Liste der Quests im linken Panel.
+         * Fügt Drag-and-Drop-Attribute und Listener hinzu.
          */
         function renderQuestList() {
             questListPanel.innerHTML = ''; // Vorherige Liste leeren
@@ -828,6 +862,17 @@
 
                 questItem.className = itemClasses;
                 questItem.setAttribute('data-id', quest.id);
+
+                // Drag-and-Drop Attribute nur im Bearbeitungsmodus
+                if (isEditMode) {
+                    questItem.setAttribute('draggable', 'true');
+                    questItem.addEventListener('dragstart', handleDragStart);
+                    questItem.addEventListener('dragover', handleDragOver);
+                    questItem.addEventListener('dragleave', handleDragLeave);
+                    questItem.addEventListener('drop', handleDrop);
+                    questItem.addEventListener('dragend', handleDragEnd);
+                }
+
 
                 questItem.innerHTML = `
                     <div class="quest-item-title">${quest.title}</div>
@@ -938,8 +983,6 @@
                 roReward.textContent = '';
                 roStatus.textContent = '';
             }
-            // Wichtig: renderQuestList() hier nicht aufrufen, um Endlosschleife zu vermeiden
-            // updateUIForMode() und selectQuest() rufen renderQuestList() bereits indirekt auf.
         }
 
         /**
@@ -952,13 +995,16 @@
             }
             showLoading();
             try {
+                // Weise der neuen Quest die höchste aktuelle Reihenfolge + 1 zu
+                const maxOrder = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) : -1;
                 const newQuest = {
                     title: 'Neue Quest',
                     description: 'Dies ist eine brandneue Quest. Bearbeite die Details!',
                     objectives: ['Erstes Ziel (0/1)'],
                     reward: 'Unbekannt',
                     status: 'Aktiv',
-                    createdAt: new Date().toISOString() // Timestamp hinzufügen
+                    createdAt: new Date().toISOString(), // Timestamp hinzufügen
+                    order: maxOrder + 1 // Reihenfolge festlegen
                 };
                 const docRef = await addDoc(questCollectionRef, newQuest);
                 selectQuest(docRef.id); // Neue Quest direkt auswählen
@@ -994,6 +1040,15 @@
                     status: questStatusSelect.value,
                     updatedAt: new Date().toISOString() // Timestamp aktualisieren
                 };
+                // Stelle sicher, dass die Order-Eigenschaft nicht verloren geht, wenn sie vorhanden ist
+                const existingQuest = quests.find(q => q.id === selectedQuestId);
+                if (existingQuest && existingQuest.order !== undefined) {
+                    updatedQuest.order = existingQuest.order;
+                } else if (updatedQuest.order === undefined) {
+                     updatedQuest.order = quests.length > 0 ? Math.max(...quests.map(q => q.order || 0)) + 1 : 0;
+                }
+
+
                 await setDoc(doc(db, `artifacts/${appId}/public/data/quests`, selectedQuestId), updatedQuest, { merge: true });
                 showMessageBox('Änderungen gespeichert!');
             } catch (e) {
@@ -1052,6 +1107,7 @@
 
         /**
          * Sortiert die Quests basierend auf dem ausgewählten Kriterium (in memory).
+         * Diese Sortierung ist nur visuell im Frontend, die Drag-and-Drop-Reihenfolge ist persistent.
          */
         function sortQuests() {
             const criteria = sortCriteriaSelect.value;
@@ -1069,11 +1125,108 @@
                     }
                     return statusA - statusB;
                 });
+            } else if (criteria === 'customOrder') {
+                // Diese Option verwendet die standardmäßige 'order'-Sortierung beim Laden.
+                // Erneutes Laden der Liste basierend auf der 'order'-Eigenschaft aus Firestore.
+                // Da `quests` bereits durch `loadQuestsFromFirestore` sortiert wird,
+                // brauchen wir hier nur `renderQuestList()` aufrufen.
             }
-            renderQuestList();
+            renderQuestList(); // Liste nach der Sortierung neu rendern
             showMessageBox('Quests sortiert!');
         }
 
+        // --- Drag-and-Drop Funktionen ---
+        function handleDragStart(e) {
+            if (!isEditMode) return; // Nur im Bearbeitungsmodus ziehen
+            draggedItem = this; // 'this' ist das Element, das gezogen wird
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.id); // Übertrage die ID des gezogenen Elements
+
+            // Verzögerung für das Hinzufügen der 'dragging' Klasse, damit der Screenshot des Browsers erfasst wird
+            setTimeout(() => {
+                this.classList.add('dragging');
+            }, 0);
+        }
+
+        function handleDragOver(e) {
+            if (!isEditMode) return;
+            e.preventDefault(); // Ermöglicht das Ablegen
+            if (this !== draggedItem) { // Verhindere, dass man über sich selbst zieht
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (!isEditMode) return;
+            this.classList.remove('drag-over');
+        }
+
+        async function handleDrop(e) {
+            if (!isEditMode) return;
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (this !== draggedItem) {
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const droppedOnId = this.dataset.id;
+
+                const draggedIndex = quests.findIndex(q => q.id === draggedId);
+                const droppedOnIndex = quests.findIndex(q => q.id === droppedOnId);
+
+                if (draggedIndex === -1 || droppedOnIndex === -1) {
+                    console.error("Fehler: Gezogenes oder Ziel-Element nicht gefunden.");
+                    showMessageBox("Fehler beim Verschieben der Quest.");
+                    return;
+                }
+
+                // Element aus dem ursprünglichen Platz entfernen
+                const [movedQuest] = quests.splice(draggedIndex, 1);
+
+                // Element an der neuen Position einfügen
+                quests.splice(droppedOnIndex, 0, movedQuest);
+
+                // Reihenfolge in Firebase aktualisieren
+                await updateQuestOrderInFirestore();
+                showMessageBox('Reihenfolge der Quests aktualisiert!');
+            }
+        }
+
+        async function handleDragEnd(e) {
+            if (!isEditMode) return;
+            this.classList.remove('dragging');
+            // Entferne auch 'drag-over' von allen Elementen, falls es irgendwo hängen geblieben ist
+            document.querySelectorAll('.quest-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedItem = null; // Zurücksetzen des gezogenen Elements
+            renderQuestList(); // Sicherstellen, dass die Liste nach dem Ende des Zugs korrekt gerendert wird
+        }
+
+        /**
+         * Aktualisiert die 'order'-Eigenschaft aller Quests in Firestore.
+         * Weist jeder Quest eine neue Reihenfolge basierend auf ihrer aktuellen Position im 'quests'-Array zu.
+         */
+        async function updateQuestOrderInFirestore() {
+            if (!isFirebaseReady) {
+                showMessageBox("Firebase ist nicht bereit. Kann Reihenfolge nicht speichern.");
+                return;
+            }
+            showLoading();
+            try {
+                const batch = writeBatch(db);
+                quests.forEach((quest, index) => {
+                    const questDocRef = doc(db, `artifacts/${appId}/public/data/quests`, quest.id);
+                    // Nur die Order-Eigenschaft aktualisieren
+                    batch.update(questDocRef, { order: index });
+                });
+                await batch.commit();
+            } catch (e) {
+                console.error("Fehler beim Speichern der neuen Quest-Reihenfolge: ", e);
+                showMessageBox("Fehler beim Speichern der Reihenfolge: " + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
 
         // Event Listener initialisieren
         addQuestButton.addEventListener('click', addQuest);
@@ -1088,7 +1241,7 @@
                 passwordInput.value = ''; // Passwortfeld leeren
                 updateUIForMode();
                 selectQuest(selectedQuestId); // Details im Edit-Modus neu laden
-                showMessageBox('Bearbeitungsmodus aktiviert!');
+                showMessageBox('Bearbeitungsmodus aktiviert! Du kannst Quests jetzt ziehen und ablegen.');
             } else {
                 showMessageBox('Falsches Passwort!');
                 passwordInput.value = ''; // Passwortfeld leeren
