@@ -30,15 +30,15 @@
         let adminMode = false;
         let db;
 
-        // UI Elemente (werden nach DOMContentLoaded zugewiesen)
-        let questListContent, questDetailContent, questCounter;
+        // UI Elemente
+        let questListContent, questDetailContent, questCounter, trackQuestBtn;
 
         // Hauptfunktion
         async function main() {
-            // UI Elemente sicher zuweisen, nachdem das DOM geladen ist
             questListContent = document.getElementById('quest-list-content');
             questDetailContent = document.getElementById('quest-detail-content');
             questCounter = document.getElementById('quest-counter');
+            trackQuestBtn = document.getElementById('track-quest-btn');
 
             try {
                 const app = initializeApp(firebaseConfig);
@@ -80,7 +80,7 @@
                         questItem.innerHTML = `
                             <span class="quest-title">${quest.title}</span>
                             <span class="quest-status">
-                                ${quest.xp || ''}
+                                (${quest.xp || 'JGA'})
                                 ${quest.status === 'completed' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
                             </span>
                         `;
@@ -88,7 +88,6 @@
                     }
                 });
                 
-                // Quest-Zähler nur aktualisieren, wenn das Element existiert
                 if (questCounter) {
                     questCounter.innerText = `Quests: ${nonCategoryQuestsCount}/25`;
                 }
@@ -117,7 +116,7 @@
         function renderQuestView(quest) {
             questDetailContent.innerHTML = `
                 <h2>${quest.title}</h2>
-                <p class="quest-giver">Ein Abgesandter des Spielmasters hat eine Nachricht für dich.</p>
+                <p class="quest-giver">${quest.giver || 'Ein Abgesandter des Spielmasters hat eine Nachricht für dich.'}</p>
                 <p class="quest-objective">${quest.tasks || 'Objective'}</p>
                 <h3>DESCRIPTION</h3>
                 <p>${quest.description.replace(/\n/g, '<br>')}</p>
@@ -132,20 +131,22 @@
                 <div class="admin-form">
                     <label>Titel:</label>
                     <input type="text" id="admin-title" value="${quest.title}">
+                    <label>Questgeber-Text:</label>
+                    <input type="text" id="admin-giver" value="${quest.giver || ''}">
                     <label>Beschreibung:</label>
                     <textarea id="admin-description">${quest.description}</textarea>
                     <label>Aufgaben:</label>
                     <textarea id="admin-tasks">${quest.tasks}</textarea>
                     <label>Belohnung:</label>
                     <input type="text" id="admin-reward" value="${quest.reward}">
-                    <label>XP:</label>
+                    <label>Zusatz (z.B. XP):</label>
                     <input type="text" id="admin-xp" value="${quest.xp || ''}">
                     <label>Status:</label>
                     <select id="admin-status">
                         <option value="active" ${quest.status === 'active' ? 'selected' : ''}>Aktiv</option>
                         <option value="completed" ${quest.status === 'completed' ? 'selected' : ''}>Abgeschlossen</option>
                     </select>
-                    <button class="questlog-button" id="save-quest-btn">Speichern</button>
+                    <button class="admin-save-button" id="save-quest-btn">Speichern</button>
                 </div>
             `;
             document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(quest.id));
@@ -155,6 +156,7 @@
             const questRef = doc(db, "quests", questId);
             const saveData = {
                 title: document.getElementById('admin-title').value,
+                giver: document.getElementById('admin-giver').value,
                 description: document.getElementById('admin-description').value,
                 tasks: document.getElementById('admin-tasks').value,
                 reward: document.getElementById('admin-reward').value,
@@ -163,7 +165,7 @@
             };
             await updateDoc(questRef, saveData);
             adminMode = false;
-            document.getElementById('track-btn').innerText = 'Track';
+            if (trackQuestBtn) trackQuestBtn.classList.remove('active');
             showQuestDetails(questId);
         }
 
@@ -172,7 +174,19 @@
                 const questItem = event.target.closest('.quest-item');
                 if (questItem) showQuestDetails(questItem.dataset.questId);
             });
-            document.getElementById('abandon-btn').addEventListener('click', () => alert("Ein Champion gibt niemals auf!"));
+
+            document.getElementById('abandon-btn').addEventListener('click', () => {
+                const quotes = [
+                    "Arise, my champion!", "You are not prepared!", "Tempest Keep was merely a setback.",
+                    "By fire be purged!", "LEEROOOY JENKINS!", "Work is da poop! No more!",
+                    "You no take candle!", "Me not that kind of orc.", "Stand in the fire, DPS is higher.",
+                    "Less QQ, more pew pew.", "Did you think we had forgotten? Did you think we had forgiven?",
+                    "Time is money, friend.", "Lok'tar ogar! Victory or death!",
+                ];
+                document.getElementById('modal-quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+                document.getElementById('quote-modal').style.display = 'flex';
+            });
+
             document.getElementById('share-btn').addEventListener('click', () => {
                 const quest = questsData[currentSelectedQuestId];
                 if (quest) {
@@ -180,22 +194,33 @@
                     window.open(`https://wa.me/?text=${text}`, '_blank');
                 }
             });
-            document.getElementById('track-btn').addEventListener('click', () => {
-                if (adminMode) {
-                    adminMode = false;
-                    document.getElementById('track-btn').innerText = 'Track';
-                    showQuestDetails(currentSelectedQuestId);
-                } else {
+
+            if (trackQuestBtn) {
+                trackQuestBtn.addEventListener('click', () => {
+                    if (adminMode) return;
                     const password = prompt("Spielmaster-Passwort:");
                     if (password === 'HomoComo') {
                         adminMode = true;
-                        document.getElementById('track-btn').innerText = 'View Mode';
+                        trackQuestBtn.classList.add('active');
                         showQuestDetails(currentSelectedQuestId);
                     } else if (password) {
                         alert('Falsches Passwort!');
                     }
+                });
+            }
+
+            document.getElementById('exit-btn').addEventListener('click', () => {
+                 if (adminMode) {
+                    adminMode = false;
+                    if (trackQuestBtn) trackQuestBtn.classList.remove('active');
+                    showQuestDetails(currentSelectedQuestId);
                 }
             });
+
+            // Close modal
+            document.querySelector('.modal-close-btn').addEventListener('click', () => {
+                document.getElementById('quote-modal').style.display = 'none';
+            })
         }
         document.addEventListener('DOMContentLoaded', main);
     </script>
@@ -237,19 +262,37 @@
             position: relative;
             color: var(--color-text-light);
         }
-        /* Hinzugefügter Header-Bereich */
-        .questlog-header {
+        
+        /* --- Header Elemente --- */
+        .questlog-title {
             position: absolute;
-            top: 25px;
+            top: 28px;
             left: 50%;
             transform: translateX(-50%);
             font-family: var(--font-title);
             font-size: 18px;
             color: var(--color-text-light);
-            display: flex;
-            align-items: center;
-            gap: 150px; /* Abstand zwischen Titel und Zähler */
         }
+        #quest-counter {
+            position: absolute;
+            top: 30px;
+            right: 80px;
+            font-family: var(--font-title);
+            font-size: 14px;
+        }
+        #track-quest-btn {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--color-quest-completed);
+        }
+        #track-quest-btn.active {
+            color: var(--color-quest-active);
+        }
+        
+        /* --- Hauptlayout --- */
         .questlog-main {
             display: flex;
             position: absolute;
@@ -263,6 +306,7 @@
             width: 45%;
             overflow-y: auto;
             padding-right: 15px;
+            margin-top: 50px; /* Platz für "Track Quest" */
         }
         .quest-detail-panel {
             width: 55%;
@@ -301,8 +345,9 @@
             font-family: var(--font-title); font-size: 14px; color: #000; margin-top: 20px;
         }
         .quest-detail-panel p { color: var(--color-text-dark); }
-        .quest-giver, .quest-objective { color: #50280a; }
+        .quest-giver, .quest-objective { color: #50280a; font-weight: bold; }
 
+        /* --- Footer Buttons --- */
         .questlog-button {
             position: absolute;
             bottom: 22px;
@@ -317,8 +362,8 @@
         }
         .questlog-button:hover { opacity: 0.7; }
         #abandon-btn { left: 45px; }
-        #share-btn { right: 115px; }
-        #track-btn { right: 35px; }
+        #share-btn { left: 50%; transform: translateX(-50%); }
+        #exit-btn { right: 45px; }
         
         .quest-icon {
             width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
@@ -326,24 +371,58 @@
         .icon-collapse { background-image: var(--icon-collapse); margin-right: 8px;}
         .icon-checkmark { background-image: var(--icon-checkmark); margin-left: 8px; }
         
-        /* Admin Form */
-        .admin-form label { color: #000; }
+        /* --- Admin Form --- */
+        .admin-form { color: #000; }
+        .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
         .admin-form input, .admin-form textarea, .admin-form select {
             width: 100%; padding: 8px; font-size: 14px; border: 1px solid #887a61; box-sizing: border-box;
+            border-radius: 3px;
+        }
+        .admin-form textarea { resize: vertical; min-height: 80px; }
+        .admin-save-button {
+            display: block; margin: 20px auto 0; padding: 10px 25px;
+            font-family: var(--font-title); color: var(--color-gold);
+            background-color: #3a2a1a; border: 1px solid var(--color-gold);
+            border-radius: 5px; cursor: pointer;
         }
 
         /* --- Custom Scrollbar --- */
         ::-webkit-scrollbar { width: 16px; }
-        ::-webkit-scrollbar-track { background: none; }
-        ::-webkit-scrollbar-thumb { background-image: var(--scrollbar-thumb); background-repeat: no-repeat; background-position: center; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background-color: #555; border: 1px solid #222; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #777; }
+
+        /* --- Modal für Sprüche --- */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-image: url('assets/questlog_background.png');
+            background-size: cover;
+            padding: 40px;
+            border: 2px solid var(--color-gold);
+            max-width: 500px; text-align: center;
+            font-size: 18px; color: var(--color-text-light);
+            text-shadow: 1px 1px 3px #000;
+        }
+        .modal-close-btn {
+            margin-top: 20px; padding: 8px 20px;
+            font-family: var(--font-title); cursor: pointer;
+            color: var(--color-gold); background-color: #3a2a1a;
+            border: 1px solid var(--color-gold);
+        }
+
     </style>
 </head>
 <body>
     <div class="questlog-container">
-        <!-- KORREKTUR: Fehlender Header wurde wieder hinzugefügt -->
-        <header class="questlog-header">
-            <span>Quest Log</span>
-            <span id="quest-counter">Quests: 0/25</span>
+        <header>
+            <div class="questlog-title">Quest Log</div>
+            <div id="track-quest-btn">Track Quest</div>
+            <div id="quest-counter">Quests: 0/25</div>
         </header>
 
         <main class="questlog-main">
@@ -354,11 +433,21 @@
             </div>
             <div class="quest-detail-panel" id="quest-detail-content"></div>
         </main>
-        <footer class="questlog-footer">
+
+        <footer>
             <button class="questlog-button" id="abandon-btn">Abandon Quest</button>
             <button class="questlog-button" id="share-btn">Share Quest</button>
-            <button class="questlog-button" id="track-btn">Track</button>
+            <button class="questlog-button" id="exit-btn">Exit</button>
         </footer>
     </div>
+
+    <!-- Modal für "Abandon Quest" Sprüche -->
+    <div id="quote-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-quote">Hier kommt ein Spruch hin.</p>
+            <button class="modal-close-btn">Schließen</button>
+        </div>
+    </div>
+
 </body>
 </html>
