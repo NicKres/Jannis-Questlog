@@ -29,10 +29,9 @@
         let currentSelectedQuestId = null;
         let adminMode = false;
         let db;
-        let audioStarted = false;
 
         // UI Elemente
-        let questListContent, questDetailContent, questCounter, adminAccessBtn;
+        let questListContent, questDetailContent, questCounter, adminAccessBtn, newQuestBtnContainer;
 
         // Hauptfunktion
         async function main() {
@@ -40,6 +39,7 @@
             questDetailContent = document.getElementById('quest-detail-content');
             questCounter = document.getElementById('quest-counter');
             adminAccessBtn = document.getElementById('admin-access-btn');
+            newQuestBtnContainer = document.getElementById('new-quest-btn-container');
 
             try {
                 const app = initializeApp(firebaseConfig);
@@ -175,13 +175,6 @@
                 </div>
             `;
             
-            const form = questDetailContent.querySelector('.admin-form');
-            const newQuestBtn = document.createElement('button');
-            newQuestBtn.className = 'admin-new-quest-button';
-            newQuestBtn.innerText = 'Neue Quest erstellen';
-            newQuestBtn.onclick = () => renderAdminView({}, true);
-            form.appendChild(newQuestBtn);
-
             document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(quest.id, isNew));
         }
         
@@ -205,6 +198,7 @@
                 }
                 adminMode = false;
                 if (adminAccessBtn) adminAccessBtn.classList.remove('active');
+                if (newQuestBtnContainer) newQuestBtnContainer.style.display = 'none';
             } catch (e) {
                 console.error("Fehler beim Speichern: ", e);
                 alert("Speichern fehlgeschlagen!");
@@ -234,6 +228,7 @@
                     if (adminMode) {
                         adminMode = false;
                         adminAccessBtn.classList.remove('active');
+                        newQuestBtnContainer.style.display = 'none';
                         showQuestDetails(currentSelectedQuestId);
                         return;
                     }
@@ -241,6 +236,7 @@
                     if (password === 'HomoComo') {
                         adminMode = true;
                         adminAccessBtn.classList.add('active');
+                        newQuestBtnContainer.style.display = 'block';
                         if (currentSelectedQuestId) {
                             showQuestDetails(currentSelectedQuestId);
                         } else {
@@ -251,29 +247,13 @@
                     }
                 });
             }
+
+            document.getElementById('new-quest-btn').addEventListener('click', () => {
+                renderAdminView({}, true);
+            });
             
             document.querySelector('.modal-close-btn').addEventListener('click', () => {
                 document.getElementById('quote-modal').style.display = 'none';
-            });
-
-            // --- Soundtrack Controls ---
-            const audioPlayer = document.getElementById('background-audio');
-            const soundControl = document.getElementById('sound-control');
-            
-            soundControl.addEventListener('click', () => {
-                if (!audioStarted) {
-                    audioPlayer.play().then(() => {
-                        audioStarted = true;
-                        audioPlayer.muted = false;
-                        soundControl.classList.remove('muted');
-                    }).catch(e => {
-                        console.error("Audio konnte nicht gestartet werden:", e);
-                        alert("Audio konnte nicht gestartet werden. Bitte interagiere erneut mit der Seite.");
-                    });
-                } else {
-                    audioPlayer.muted = !audioPlayer.muted;
-                    soundControl.classList.toggle('muted', audioPlayer.muted);
-                }
             });
         }
         
@@ -331,15 +311,15 @@
         
         #quest-counter {
             position: absolute;
-            top: 13.5%;
+            top: 13.8%;      /* 1px runter */
             right: 8%;
             font-family: var(--font-title);
             font-size: 14px;
         }
         #admin-access-btn {
             position: absolute;
-            top: 7.3%;
-            left: 6.5%;
+            top: 8%;      /* 5px runter */
+            left: 7%;     /* 5px nach rechts */
             width: 45px;
             height: 45px;
             background: transparent;
@@ -360,7 +340,7 @@
             overflow-y: auto;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            padding: 10px 15px 5px 10px;
+            padding: 15px 25px 10px 15px;
             box-sizing: border-box;
         }
         .quest-list-panel::-webkit-scrollbar {
@@ -376,7 +356,7 @@
             overflow-y: auto;
             font-size: 16px;
             line-height: 1.7;
-            padding: 35px 5px 5px 5px;
+            padding: 45px 10px 5px 5px; /* Padding rechts +5px */
             box-sizing: border-box;
         }
         
@@ -438,6 +418,21 @@
         .icon-collapse { background-image: var(--icon-collapse); margin-right: 8px;}
         .icon-checkmark { background-image: var(--icon-checkmark); margin-left: 8px; }
         
+        #new-quest-btn-container {
+            display: none;
+            position: absolute;
+            top: 14%;
+            left: 11.5%;
+        }
+        .admin-new-quest-button-main {
+            font-family: var(--font-title);
+            color: var(--color-gold);
+            background: #3a2a1a;
+            border: 1px solid var(--color-gold);
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
         .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; font-family: var(--font-text); }
         .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
         .admin-form input, .admin-form textarea, .admin-form select {
@@ -489,20 +484,6 @@
 
         #orientation-modal { display: none; }
 
-        #sound-control {
-            position: absolute;
-            top: 28px;
-            right: 45px;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f0d890"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>');
-            background-size: contain;
-        }
-        #sound-control.muted {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f0d890"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>');
-        }
-
         /* Responsive Anpassungen */
         @media (max-width: 1024px) {
             .questlog-container {
@@ -519,18 +500,17 @@
     </style>
 </head>
 <body>
-    <!-- Ersetze die src durch deine gewünschte Musik-URL -->
-    <audio id="background-audio" src="https://archive.org/download/WorldOfWarcraftMusic/1-02%20Elwynn%20Forest.mp3" loop></audio>
-
     <div class="questlog-container">
         <header>
             <button id="admin-access-btn"></button>
             <div id="quest-counter">Quests: 0/25</div>
-            <div id="sound-control" title="Musik an/aus" class="muted"></div>
         </header>
 
         <main>
             <div class="quest-list-panel">
+                <div id="new-quest-btn-container" style="display: none;">
+                    <button id="new-quest-btn" class="admin-new-quest-button-main">Neue Quest</button>
+                </div>
                 <div id="quest-list-content">
                     <div class="quest-category">Lade Quests...</div>
                 </div>
