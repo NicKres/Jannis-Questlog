@@ -299,15 +299,15 @@
         
         #quest-counter {
             position: absolute;
-            top: 13.3%;      /* 5px runter */
+            top: 13.5%;      /* 2px runter */
             right: 8%;
             font-family: var(--font-title);
             font-size: 14px;
         }
         #admin-access-btn {
             position: absolute;
-            top: 5.9%;
-            left: 5.5%;
+            top: 7.3%;      /* 10px runter */
+            left: 6.5%;     /* 10px nach rechts */
             width: 45px;
             height: 45px;
             background: transparent;
@@ -439,7 +439,7 @@
             flex-direction: column;
             justify-content: center;
         }
-        #modal-quote {
+        #modal-quote, #orientation-quote {
             font-size: 16px; color: var(--color-text-light);
             text-shadow: 1px 1px 2px #000;
             margin: 0;
@@ -466,7 +466,7 @@
                 padding-bottom: 68.36%; /* Aspect ratio 700/1024 */
             }
             .quest-detail-panel {
-                width: calc(100% - 40px);
+                width: calc(100% - 80px); /* 40px schmaler */
             }
         }
 
