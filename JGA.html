@@ -31,14 +31,14 @@
         let db;
 
         // UI Elemente
-        let questListContent, questDetailContent, questCounter, trackQuestBtn;
+        let questListContent, questDetailContent, questCounter, adminAccessBtn;
 
         // Hauptfunktion
         async function main() {
             questListContent = document.getElementById('quest-list-content');
             questDetailContent = document.getElementById('quest-detail-content');
             questCounter = document.getElementById('quest-counter');
-            trackQuestBtn = document.getElementById('track-quest-btn');
+            adminAccessBtn = document.getElementById('admin-access-btn');
 
             try {
                 const app = initializeApp(firebaseConfig);
@@ -81,6 +81,7 @@
                         questItem.innerHTML = `
                             <span class="quest-title">${quest.title}</span>
                             <span class="quest-status">
+                                (${quest.status || 'active'})
                                 ${quest.status === 'completed' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
                             </span>
                         `;
@@ -124,11 +125,10 @@
             questDetailContent.innerHTML = `
                 <h2>${quest.title || ''}</h2>
                 <p class="quest-giver">${quest.giver || ''}</p>
-                ${quest.tasks ? `<h3>OBJECTIVE</h3><p class="quest-objective">${quest.tasks}</p>` : ''}
-                <h3>DESCRIPTION</h3>
                 <p>${quest.description ? quest.description.replace(/\n/g, '<br>') : ''}</p>
                 <h3>REWARDS</h3>
                 <p>${quest.reward ? quest.reward.replace(/\n/g, '<br>') : ''}</p>
+                <p class="quest-status-detail">Status: ${quest.status || 'active'}</p>
             `;
         }
 
@@ -138,16 +138,10 @@
                 <div class="admin-form">
                     <label>Titel:</label>
                     <input type="text" id="admin-title" value="${quest.title || ''}">
-                    <label>Questgeber-Text:</label>
-                    <input type="text" id="admin-giver" value="${quest.giver || ''}">
                     <label>Beschreibung:</label>
                     <textarea id="admin-description">${quest.description || ''}</textarea>
-                    <label>Aufgaben (Objective):</label>
-                    <textarea id="admin-tasks">${quest.tasks || ''}</textarea>
                     <label>Belohnung:</label>
                     <input type="text" id="admin-reward" value="${quest.reward || ''}">
-                    <label>Zusatz (z.B. JGA):</label>
-                    <input type="text" id="admin-xp" value="${quest.xp || ''}">
                     <label>Status:</label>
                     <select id="admin-status">
                         <option value="active" ${quest.status === 'active' ? 'selected' : ''}>Aktiv</option>
@@ -174,11 +168,8 @@
             const questsCollectionPath = "artifacts/wowquestlogprojekt/public/data/quests";
             const saveData = {
                 title: document.getElementById('admin-title').value,
-                giver: document.getElementById('admin-giver').value,
                 description: document.getElementById('admin-description').value,
-                tasks: document.getElementById('admin-tasks').value,
                 reward: document.getElementById('admin-reward').value,
-                xp: document.getElementById('admin-xp').value,
                 status: document.getElementById('admin-status').value,
                 isCategory: document.getElementById('admin-is-category').checked,
                 order: parseInt(document.getElementById('admin-order').value, 10) || 0,
@@ -192,7 +183,7 @@
                     await updateDoc(questRef, saveData);
                 }
                 adminMode = false;
-                if (trackQuestBtn) trackQuestBtn.classList.remove('active');
+                if (adminAccessBtn) adminAccessBtn.classList.remove('active');
             } catch (e) {
                 console.error("Fehler beim Speichern: ", e);
                 alert("Speichern fehlgeschlagen!");
@@ -217,18 +208,18 @@
                 document.getElementById('quote-modal').style.display = 'flex';
             });
 
-            if (trackQuestBtn) {
-                trackQuestBtn.addEventListener('click', () => {
+            if (adminAccessBtn) {
+                adminAccessBtn.addEventListener('click', () => {
                     if (adminMode) {
                         adminMode = false;
-                        trackQuestBtn.classList.remove('active');
+                        adminAccessBtn.classList.remove('active');
                         showQuestDetails(currentSelectedQuestId);
                         return;
                     }
                     const password = prompt("Spielmaster-Passwort:");
                     if (password === 'HomoComo') {
                         adminMode = true;
-                        trackQuestBtn.classList.add('active');
+                        adminAccessBtn.classList.add('active');
                         if (currentSelectedQuestId) {
                             showQuestDetails(currentSelectedQuestId);
                         } else {
@@ -287,25 +278,24 @@
         
         #quest-counter {
             position: absolute;
-            top: 15%;      /* 15px runter */
-            right: 9%;      /* 5px nach rechts */
+            top: 12.9%;      /* 5px hoch */
+            right: 8.5%;      /* 5px nach rechts */
             font-family: var(--font-title);
             font-size: 14px;
         }
-        #track-quest-btn {
+        #admin-access-btn {
             position: absolute;
-            top: 14.2%;
-            left: 21.2%;    /* 30px nach rechts */
-            font-size: 14px;
+            top: 4.5%;
+            left: 4%;
+            width: 45px;
+            height: 45px;
+            background: transparent;
+            border: none;
             cursor: pointer;
-            color: transparent;
-            width: 100px;
-            height: 20px;
+            border-radius: 50%;
         }
-        #track-quest-btn.active { 
-            color: var(--color-quest-active); 
-            /* Optional: Einen sichtbaren Indikator für den Admin-Modus hinzufügen */
-            border: 1px solid red;
+        #admin-access-btn.active {
+            box-shadow: 0 0 10px 3px red;
         }
         
         .questlog-main {
@@ -321,17 +311,17 @@
             width: 44%;
             overflow-y: auto;
             padding-right: 15px;
-            margin-top: 85px; /* 10px runter */
-            margin-left: 30px; /* 5px nach rechts */
+            margin-top: 85px; 
+            margin-left: 35px; /* 5px nach rechts */
         }
         .quest-detail-panel {
-            width: 43.6%; /* 40px schmaler */
+            width: 47.6%; /* 20px schmaler */
             overflow-y: auto;
-            padding: 10px 20px 10px 10px;
+            padding: 10px 0px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            margin-top: 70px; /* 10px runter */
-            margin-left: 30px; 
+            margin-top: 80px; /* 10px runter */
+            margin-left: 25px; /* 5px nach links */
         }
         .quest-category {
             display: flex;
@@ -362,6 +352,7 @@
         }
         .quest-detail-panel p { color: var(--color-text-dark); }
         .quest-giver, .quest-objective { color: #50280a; font-weight: bold; }
+        .quest-status-detail { font-style: italic; margin-top: 15px; }
 
         .questlog-button {
             position: absolute;
@@ -411,7 +402,7 @@
             background-size: 100% 100%;
             width: 600px;
             height: 150px;
-            padding: 20px 20px 20px 160px; /* 20px nach rechts */
+            padding: 20px 20px 20px 160px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -443,7 +434,7 @@
 <body>
     <div class="questlog-container">
         <header>
-            <div id="track-quest-btn"></div>
+            <button id="admin-access-btn"></button>
             <div id="quest-counter">Quests: 0/25</div>
         </header>
 
