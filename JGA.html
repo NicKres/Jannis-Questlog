@@ -81,7 +81,6 @@
                         questItem.innerHTML = `
                             <span class="quest-title">${quest.title}</span>
                             <span class="quest-status">
-                                (${quest.xp || 'JGA'})
                                 ${quest.status === 'completed' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
                             </span>
                         `;
@@ -123,9 +122,9 @@
 
         function renderQuestView(quest) {
             questDetailContent.innerHTML = `
-                <h2>${quest.title}</h2>
-                <p class="quest-giver">${quest.giver || 'Ein Abgesandter des Spielmasters hat eine Nachricht für dich.'}</p>
-                <p class="quest-objective">${quest.tasks || 'Objective'}</p>
+                <h2>${quest.title || ''}</h2>
+                <p class="quest-giver">${quest.giver || ''}</p>
+                ${quest.tasks ? `<h3>OBJECTIVE</h3><p class="quest-objective">${quest.tasks}</p>` : ''}
                 <h3>DESCRIPTION</h3>
                 <p>${quest.description ? quest.description.replace(/\n/g, '<br>') : ''}</p>
                 <h3>REWARDS</h3>
@@ -143,7 +142,7 @@
                     <input type="text" id="admin-giver" value="${quest.giver || ''}">
                     <label>Beschreibung:</label>
                     <textarea id="admin-description">${quest.description || ''}</textarea>
-                    <label>Aufgaben:</label>
+                    <label>Aufgaben (Objective):</label>
                     <textarea id="admin-tasks">${quest.tasks || ''}</textarea>
                     <label>Belohnung:</label>
                     <input type="text" id="admin-reward" value="${quest.reward || ''}">
@@ -243,7 +242,7 @@
             
             document.querySelector('.modal-close-btn').addEventListener('click', () => {
                 document.getElementById('quote-modal').style.display = 'none';
-            })
+            });
         }
         document.addEventListener('DOMContentLoaded', main);
     </script>
@@ -288,23 +287,26 @@
         
         #quest-counter {
             position: absolute;
-            top: 12.9%; /* 15px runter */
-            right: 9.5%; /* 10px nach rechts */
+            top: 15%;      /* 15px runter */
+            right: 9%;      /* 5px nach rechts */
             font-family: var(--font-title);
             font-size: 14px;
         }
         #track-quest-btn {
             position: absolute;
             top: 14.2%;
-            left: 18.3%; /* 30px nach rechts */
+            left: 21.2%;    /* 30px nach rechts */
             font-size: 14px;
             cursor: pointer;
-            color: transparent; /* Text unsichtbar machen */
-        }
-        #track-quest-btn:hover {
             color: transparent;
+            width: 100px;
+            height: 20px;
         }
-        #track-quest-btn.active { color: var(--color-quest-active); }
+        #track-quest-btn.active { 
+            color: var(--color-quest-active); 
+            /* Optional: Einen sichtbaren Indikator für den Admin-Modus hinzufügen */
+            border: 1px solid red;
+        }
         
         .questlog-main {
             display: flex;
@@ -319,16 +321,16 @@
             width: 44%;
             overflow-y: auto;
             padding-right: 15px;
-            margin-top: 75px; 
-            margin-left: 25px; /* 5px nach rechts */
+            margin-top: 85px; /* 10px runter */
+            margin-left: 30px; /* 5px nach rechts */
         }
         .quest-detail-panel {
-            width: 46.5%; /* 30px schmaler */
+            width: 43.6%; /* 40px schmaler */
             overflow-y: auto;
             padding: 10px 20px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            margin-top: 60px; /* 10px runter */
+            margin-top: 70px; /* 10px runter */
             margin-left: 30px; 
         }
         .quest-category {
@@ -409,7 +411,7 @@
             background-size: 100% 100%;
             width: 600px;
             height: 150px;
-            padding: 20px 20px 20px 140px;
+            padding: 20px 20px 20px 160px; /* 20px nach rechts */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
