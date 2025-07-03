@@ -147,7 +147,7 @@
                     <textarea id="admin-tasks">${quest.tasks || ''}</textarea>
                     <label>Belohnung:</label>
                     <input type="text" id="admin-reward" value="${quest.reward || ''}">
-                    <label>Zusatz (z.B. XP):</label>
+                    <label>Zusatz (z.B. JGA):</label>
                     <input type="text" id="admin-xp" value="${quest.xp || ''}">
                     <label>Status:</label>
                     <select id="admin-status">
@@ -218,14 +218,6 @@
                 document.getElementById('quote-modal').style.display = 'flex';
             });
 
-            document.getElementById('share-btn').addEventListener('click', () => {
-                const quest = questsData[currentSelectedQuestId];
-                if (quest) {
-                    const text = encodeURIComponent(`JGA-Quest: ${quest.title}`);
-                    window.open(`https://wa.me/?text=${text}`, '_blank');
-                }
-            });
-
             if (trackQuestBtn) {
                 trackQuestBtn.addEventListener('click', () => {
                     if (adminMode) {
@@ -249,14 +241,6 @@
                 });
             }
             
-            document.getElementById('exit-btn').addEventListener('click', () => {
-                 if (adminMode) {
-                    adminMode = false;
-                    if (trackQuestBtn) trackQuestBtn.classList.remove('active');
-                    showQuestDetails(currentSelectedQuestId);
-                }
-            });
-
             document.querySelector('.modal-close-btn').addEventListener('click', () => {
                 document.getElementById('quote-modal').style.display = 'none';
             })
@@ -311,7 +295,7 @@
         }
         #track-quest-btn {
             position: absolute;
-            top: 14%;
+            top: 14.2%;
             left: 11.5%;
             font-size: 14px;
             cursor: pointer;
@@ -322,22 +306,22 @@
         .questlog-main {
             display: flex;
             position: absolute;
-            top: 10%;
-            bottom: 10%;
-            left: 3%;
-            right: 3%;
+            top: 10.5%;
+            bottom: 10.5%;
+            left: 3.5%;
+            right: 3.5%;
             gap: 2.5%;
         }
         .quest-list-panel {
-            width: 45%;
+            width: 44%;
             overflow-y: auto;
             padding-right: 15px;
-            margin-top: 50px;
+            margin-top: 55px;
         }
         .quest-detail-panel {
-            width: 52.5%;
+            width: 53.5%;
             overflow-y: auto;
-            padding: 10px;
+            padding: 10px 20px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
         }
@@ -374,22 +358,14 @@
         .questlog-button {
             position: absolute;
             bottom: 3.2%;
-            font-family: var(--font-text);
-            font-size: 14px;
-            color: var(--color-gold);
             border: none;
-            background: none;
+            background: transparent;
             cursor: pointer;
-            transition: opacity 0.2s ease;
             width: 130px;
             height: 35px;
-            text-align: center;
-            line-height: 35px;
+            color: transparent; /* Macht den Text unsichtbar */
         }
-        .questlog-button:hover { opacity: 0.7; }
         #abandon-btn { left: 4.5%; }
-        #share-btn { left: 50%; transform: translateX(-50%); }
-        #exit-btn { right: 4.5%; }
         
         .quest-icon {
             width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
@@ -473,9 +449,7 @@
         </main>
 
         <footer>
-            <button class="questlog-button" id="abandon-btn">Abandon Quest</button>
-            <button class="questlog-button" id="share-btn">Share Quest</button>
-            <button class="questlog-button" id="exit-btn">Exit</button>
+            <button class="questlog-button" id="abandon-btn"></button>
         </footer>
     </div>
 
