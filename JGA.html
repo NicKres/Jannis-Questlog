@@ -288,22 +288,21 @@
         
         #quest-counter {
             position: absolute;
-            top: 10.8%; /* 30px runter */
-            right: 10.5%; /* 10px nach rechts */
+            top: 12.9%; /* 15px runter */
+            right: 9.5%; /* 10px nach rechts */
             font-family: var(--font-title);
             font-size: 14px;
         }
         #track-quest-btn {
             position: absolute;
             top: 14.2%;
-            left: 15.4%; /* 40px nach rechts */
+            left: 18.3%; /* 30px nach rechts */
             font-size: 14px;
             cursor: pointer;
-            color: var(--color-quest-completed);
-            transition: color 0.2s;
+            color: transparent; /* Text unsichtbar machen */
         }
         #track-quest-btn:hover {
-            color: var(--color-quest-active);
+            color: transparent;
         }
         #track-quest-btn.active { color: var(--color-quest-active); }
         
@@ -320,17 +319,17 @@
             width: 44%;
             overflow-y: auto;
             padding-right: 15px;
-            margin-top: 75px; /* 10px runter */
-            margin-left: 20px; /* 15px nach rechts */
+            margin-top: 75px; 
+            margin-left: 25px; /* 5px nach rechts */
         }
         .quest-detail-panel {
-            width: 49.5%; /* 20px schmaler */
+            width: 46.5%; /* 30px schmaler */
             overflow-y: auto;
             padding: 10px 20px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            margin-top: 50px; /* 30px runter */
-            margin-left: 30px; /* 20px nach rechts */
+            margin-top: 60px; /* 10px runter */
+            margin-left: 30px; 
         }
         .quest-category {
             display: flex;
@@ -410,7 +409,7 @@
             background-size: 100% 100%;
             width: 600px;
             height: 150px;
-            padding: 20px 20px 20px 140px; /* 20px nach rechts */
+            padding: 20px 20px 20px 140px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -442,7 +441,7 @@
 <body>
     <div class="questlog-container">
         <header>
-            <div id="track-quest-btn">Track Quest</div>
+            <div id="track-quest-btn"></div>
             <div id="quest-counter">Quests: 0/25</div>
         </header>
 
