@@ -18,7 +18,7 @@
             --color-text-header: #f0d890;
             --color-highlight: #ffb900;
             
-            /* URLs für UI-Assets - Diese werden für das finale Design benötigt */
+            /* URLs für UI-Assets */
             --bg-image: url('https://images.alphacoders.com/488/48812.jpg');
             --parchment-texture: url('https://wow.zamimg.com/images/textures/parchment/parchmenttexture.png');
             --questlog-border: url('https://wow.zamimg.com/images/tools/dragonflight-talent-calc/quest-details-bg.png');
@@ -341,7 +341,6 @@
                 font-size: 20px;
             }
         }
-
     </style>
 </head>
 <body>
@@ -351,7 +350,7 @@
         <header class="questlog-header">
             <div class="header-left">
                 <div class="book-icon"></div>
-                <span id="quest-counter">Quests: 3/25</span>
+                <span id="quest-counter">Quests: 0/0</span>
             </div>
             <h1>Quest Log</h1>
             <div class="header-right">
@@ -364,33 +363,13 @@
             <!-- Linke Seite: Quest Liste -->
             <div class="quest-list-panel">
                 <div id="quest-list-content">
-                    <!-- Statische Beispiele. Dies wird dynamisch befüllt. -->
-                    <div class="quest-item active" data-quest-id="1">
-                        <div class="quest-icon icon-active"></div>
-                        <span>Der Ruf des Champions</span>
-                        <span class="quest-level">(JGA)</span>
-                    </div>
-                    <div class="quest-item" data-quest-id="2">
-                        <div class="quest-icon icon-follow-up"></div>
-                        <span>Arkane Reagenzien</span>
-                        <span class="quest-level">(Vorbereitung)</span>
-                    </div>
-                     <div class="quest-item" data-quest-id="3">
-                        <div class="quest-icon icon-completed"></div>
-                        <span>Die Reise zur Mondlichtung</span>
-                        <span class="quest-level">(Abgeschlossen)</span>
-                    </div>
-                    <div class="quest-item" data-quest-id="4">
-                        <div class="quest-icon icon-failed"></div>
-                        <span>Eine fehlgeschlagene Eskorte</span>
-                        <span class="quest-level">(Fehlgeschlagen)</span>
-                    </div>
+                    <!-- Wird dynamisch via Firebase befüllt -->
                 </div>
             </div>
 
             <!-- Rechte Seite: Quest Details -->
             <div class="quest-detail-panel" id="quest-detail-content">
-                 <!-- Wird per JS befüllt -->
+                <!-- Wird per JS befüllt -->
             </div>
         </main>
 
@@ -424,114 +403,168 @@
         </div>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Importiere die notwendigen Firebase-Funktionen
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    <script>
-        // Statische Daten für den Prototyp
-        const quests = {
-            1: {
-                title: "Der Ruf des Champions",
-                description: "Ein mysteriöser Brief erreicht dich, Champion Alenia. Eine dringende Aufgabe wartet auf dich. Die Mächte Azeroths haben dich auserwählt, eine Reihe von Prüfungen zu bestehen, die deinen Mut, deine Weisheit und deine Ausdauer auf die Probe stellen werden.<br><br>Dein Abenteuer beginnt an dem Ort, den du Heimat nennst. Bereite dich vor, denn dies ist nur der Anfang einer legendären Reise.",
-                tasks: "Begib dich unverzüglich zum Startpunkt deiner Reise.",
-                reward: "Karte zur Mondlichtung, Erste Anweisungen des Spielmasters."
-            },
-            2: {
-                title: "Arkane Reagenzien",
-                description: "Um die bevorstehenden Herausforderungen zu meistern, musst du eine Reihe von arkanen Reagenzien sammeln. Diese Gegenstände sind für die Rituale notwendig, die dich stärken und leiten werden.<br><br>Suche nach den Komponenten, die auf deiner Liste stehen. Sie sind für deine Reise unerlässlich.",
-                tasks: "Sammle alle Gegenstände für das JGA-Wochenende.",
-                reward: "Gefüllter Reisebeutel."
-            },
-            3: {
-                title: "Die Reise zur Mondlichtung",
-                description: "Du hast die ersten Vorbereitungen getroffen. Nun ist es an der Zeit, zur sagenumwobenen Mondlichtung (Bad Teinach) aufzubrechen. Ein Ort der Ruhe und Kraft, an dem die nächsten Prüfungen auf dich warten.",
-                tasks: "Reise sicher zur Unterkunft in Bad Teinach.",
-                reward: "Erholung und ein stärkendes Mahl."
-            },
-            4: {
-                title: "Eine fehlgeschlagene Eskorte",
-                description: "Du wurdest beauftragt, einen wichtigen NPC zu eskortieren, aber die Gefahren der Wildnis waren zu groß. Der NPC wurde von Murlocs überrannt.<br><br>Diese Quest ist gescheitert. Manchmal kann selbst ein Champion nicht jeden retten.",
-                tasks: "Mission fehlgeschlagen.",
-                reward: "Keine. Ein bitterer Beigeschmack der Niederlage."
-            }
+        // DEIN FIREBASE PROJEKT-SETUP
+        // Ersetze dies mit den Konfigurationsdaten deines Firebase-Projekts
+        const firebaseConfig = {
+            apiKey: "DEIN_API_KEY",
+            authDomain: "DEIN_AUTH_DOMAIN",
+            projectId: "DEIN_PROJEKT_ID",
+            storageBucket: "DEIN_STORAGE_BUCKET",
+            messagingSenderId: "DEIN_MESSAGING_SENDER_ID",
+            appId: "DEIN_APP_ID"
         };
 
-        const abandonQuotes = [
-            "Arise, my champion!",
-            "You are not prepared!",
-            "Tempest Keep was merely a setback.",
-            "By fire be purged!",
-            "LEEROOOY JENKINS!",
-            "Work is da poop! No more!",
-            "You no take candle!",
-            "Me not that kind of orc.",
-            "Stand in the fire, DPS is higher.",
-            "Less QQ, more pew pew.",
-            "Did you think we had forgotten? Did you think we had forgiven?",
-            "Time is money, friend.",
-            "Lok'tar ogar! Victory or death!",
-            "I'll rip the secrets from your flesh!",
-            "For the Horde!",
-            "For the Alliance!",
-            "That's a 50 DKP minus!",
-            "More DOTS! More DOTS!",
-            "Interest ya in a pint?",
-            "My strength is returning. Soon I will be whole again."
-        ];
+        // Firebase initialisieren
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const questListContent = document.getElementById('quest-list-content');
-            const questDetailContent = document.getElementById('quest-detail-content');
+        // Globale Variable für die Quest-Daten
+        let allQuests = {};
+        let activeQuestsCount = 0;
+        let totalQuestsCount = 0;
 
-            // Funktion zum Anzeigen von Quest-Details
-            function showQuestDetails(questId) {
-                const quest = quests[questId];
-                if (quest) {
-                    questDetailContent.innerHTML = `
-                        <h2>${quest.title}</h2>
-                        <p>${quest.description}</p>
-                        <h3>Aktion</h3>
-                        <p>${quest.tasks}</p>
-                        <h3>Belohnungen</h3>
-                        <p>${quest.reward}</p>
-                    `;
-                    // Aktiven Status in der Liste aktualisieren
-                    document.querySelectorAll('.quest-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    document.querySelector(`.quest-item[data-quest-id='${questId}']`).classList.add('active');
+        // UI Elemente
+        const questListContent = document.getElementById('quest-list-content');
+        const questDetailContent = document.getElementById('quest-detail-content');
+        const questCounter = document.getElementById('quest-counter');
+
+        // Funktion zum Rendern der Quest-Liste
+        function renderQuestList(quests) {
+            questListContent.innerHTML = ''; // Leere die aktuelle Liste
+            
+            // Sortiere Quests nach Status
+            const sortedQuests = Object.values(quests).sort((a, b) => {
+                const order = { 'active': 1, 'follow-up': 2, 'completed': 3, 'failed': 4 };
+                return (order[a.status] || 5) - (order[b.status] || 5);
+            });
+
+            sortedQuests.forEach(quest => {
+                const questItem = document.createElement('div');
+                questItem.className = `quest-item`;
+                questItem.dataset.questId = quest.id;
+
+                const iconClass = `icon-${quest.status || 'active'}`;
+
+                questItem.innerHTML = `
+                    <div class="quest-icon ${iconClass}"></div>
+                    <span>${quest.title}</span>
+                    <span class="quest-level">(${quest.level || 'Quest'})</span>
+                `;
+                questListContent.appendChild(questItem);
+            });
+            
+            // Update des Quest-Zählers
+            activeQuestsCount = sortedQuests.filter(q => q.status === 'active' || q.status === 'follow-up').length;
+            totalQuestsCount = sortedQuests.length;
+            questCounter.innerText = `Quests: ${activeQuestsCount}/${totalQuestsCount}`;
+        }
+
+        // Funktion zum Anzeigen von Quest-Details
+        async function showQuestDetails(questId) {
+            const quest = allQuests[questId];
+            if (quest) {
+                questDetailContent.innerHTML = `
+                    <h2>${quest.title}</h2>
+                    <p>${quest.description || 'Keine Beschreibung verfügbar.'}</p>
+                    <h3>Aktion</h3>
+                    <p>${quest.tasks || 'Keine Aufgaben definiert.'}</p>
+                    <h3>Belohnungen</h3>
+                    <p>${quest.reward || 'Keine Belohnung angegeben.'}</p>
+                `;
+                // Aktiven Status in der Liste aktualisieren
+                document.querySelectorAll('.quest-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const activeItem = document.querySelector(`.quest-item[data-quest-id='${questId}']`);
+                if(activeItem) {
+                    activeItem.classList.add('active');
                 }
             }
+        }
+        
+        // Authentifizierung und Daten-Listener
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                console.log("Angemeldet als:", user.uid);
+                // Listener für die 'quests' Collection
+                const questsRef = collection(db, "quests");
+                onSnapshot(questsRef, (querySnapshot) => {
+                    allQuests = {}; // Reset
+                    querySnapshot.forEach((doc) => {
+                        allQuests[doc.id] = { id: doc.id, ...doc.data() };
+                    });
+                    
+                    renderQuestList(allQuests);
 
-            // Event-Listener für Klicks auf Quest-Items
-            questListContent.addEventListener('click', (event) => {
-                const questItem = event.target.closest('.quest-item');
-                if (questItem) {
-                    const questId = questItem.dataset.questId;
-                    showQuestDetails(questId);
-                }
-            });
-
-            // Initial eine Quest anzeigen
-            showQuestDetails(1);
-            
-            // Button-Funktionen
-            document.getElementById('abandon-btn').addEventListener('click', () => {
-                const quote = abandonQuotes[Math.floor(Math.random() * abandonQuotes.length)];
-                document.getElementById('abandon-quote').innerText = quote;
-                openModal('abandon-modal');
-            });
-
-            document.getElementById('share-btn').addEventListener('click', () => {
-                const activeQuestTitle = document.querySelector('.quest-item.active span').innerText;
-                const text = encodeURIComponent(`Ich bin gerade auf einem epischen Quest-Abenteuer für meinen JGA! Schau dir meine aktuelle Aufgabe an: ${activeQuestTitle}`);
-                window.open(`https://wa.me/?text=${text}`, '_blank');
-            });
-
-            document.getElementById('track-btn').addEventListener('click', () => {
-                openModal('track-modal');
-            });
+                    // Zeige die erste Quest in der Liste an, wenn eine vorhanden ist
+                    const firstQuestId = Object.keys(allQuests)[0];
+                    if (firstQuestId) {
+                        showQuestDetails(firstQuestId);
+                    } else {
+                        questDetailContent.innerHTML = "<p>Keine Quests im Logbuch. Sprich mit einem Questgeber, um neue Abenteuer zu beginnen!</p>";
+                    }
+                });
+            } else {
+                console.log("Benutzer ist nicht angemeldet. Versuche anonyme Anmeldung...");
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Fehler bei anonymer Anmeldung:", error);
+                });
+            }
         });
 
-        // Modal-Funktionen
+
+        // Event-Listener für Klicks auf Quest-Items
+        questListContent.addEventListener('click', (event) => {
+            const questItem = event.target.closest('.quest-item');
+            if (questItem) {
+                const questId = questItem.dataset.questId;
+                showQuestDetails(questId);
+            }
+        });
+
+        // --- Statische Inhalte und Button-Funktionen ---
+        const abandonQuotes = [
+            "Arise, my champion!", "You are not prepared!", "Tempest Keep was merely a setback.",
+            "By fire be purged!", "LEEROOOY JENKINS!", "Work is da poop! No more!",
+            "You no take candle!", "Me not that kind of orc.", "Stand in the fire, DPS is higher.",
+            "Less QQ, more pew pew.", "Did you think we had forgotten? Did you think we had forgiven?",
+            "Time is money, friend.", "Lok'tar ogar! Victory or death!", "I'll rip the secrets from your flesh!",
+            "For the Horde!", "For the Alliance!", "That's a 50 DKP minus!", "More DOTS! More DOTS!",
+            "Interest ya in a pint?", "My strength is returning. Soon I will be whole again."
+        ];
+
+        document.getElementById('abandon-btn').addEventListener('click', () => {
+            const quote = abandonQuotes[Math.floor(Math.random() * abandonQuotes.length)];
+            document.getElementById('abandon-quote').innerText = quote;
+            openModal('abandon-modal');
+        });
+
+        document.getElementById('share-btn').addEventListener('click', () => {
+            const activeQuestItem = document.querySelector('.quest-item.active span');
+            if (activeQuestItem) {
+                const activeQuestTitle = activeQuestItem.innerText;
+                const text = encodeURIComponent(`Ich bin gerade auf einem epischen Quest-Abenteuer für meinen JGA! Schau dir meine aktuelle Aufgabe an: ${activeQuestTitle}`);
+                window.open(`https://wa.me/?text=${text}`, '_blank');
+            } else {
+                alert("Wähle erst eine Quest aus, die du teilen möchtest!");
+            }
+        });
+
+        document.getElementById('track-btn').addEventListener('click', () => {
+            openModal('track-modal');
+        });
+    </script>
+    
+    <script>
+        // Globale Modal-Funktionen (können außerhalb des Moduls bleiben)
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
         }
@@ -539,7 +572,6 @@
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-
     </script>
 </body>
 </html>
