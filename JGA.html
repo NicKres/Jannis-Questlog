@@ -8,22 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica&display=swap" rel="stylesheet">
     
-    <style>
-        /* --- Globale Stile & Schriftarten --- */
-        :root {
-            --font-title: 'Cinzel Decorative', serif;
-            --font-text: 'IM Fell Double Pica', serif;
-            --color-gold: #ffd100;
-            --color-text: #3a2a1a;<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jannis Questlog</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica&display=swap" rel="stylesheet">
-    
     <script type="module">
         // Deine Firebase-Konfiguration
         const firebaseConfig = {
@@ -46,13 +30,16 @@
         let adminMode = false;
         let db;
 
-        // UI Elemente
-        const questListContent = document.getElementById('quest-list-content');
-        const questDetailContent = document.getElementById('quest-detail-content');
-        const questCounter = document.getElementById('quest-counter');
+        // UI Elemente (werden nach DOMContentLoaded zugewiesen)
+        let questListContent, questDetailContent, questCounter;
 
         // Hauptfunktion
         async function main() {
+            // UI Elemente sicher zuweisen, nachdem das DOM geladen ist
+            questListContent = document.getElementById('quest-list-content');
+            questDetailContent = document.getElementById('quest-detail-content');
+            questCounter = document.getElementById('quest-counter');
+
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -76,19 +63,18 @@
                 docs.sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 questsData = {};
-                let currentCategory = '';
+                let nonCategoryQuestsCount = 0;
                 docs.forEach(quest => {
                     questsData[quest.id] = quest;
 
-                    // Wenn eine Quest eine Kategorie ist
                     if (quest.isCategory) {
-                        currentCategory = quest.title;
                         const categoryItem = document.createElement('div');
                         categoryItem.className = 'quest-category';
                         categoryItem.innerHTML = `<div class="quest-icon icon-collapse"></div><span>${quest.title}</span>`;
                         questListContent.appendChild(categoryItem);
                     } else {
-                         const questItem = document.createElement('div');
+                        nonCategoryQuestsCount++;
+                        const questItem = document.createElement('div');
                         questItem.className = 'quest-item';
                         questItem.dataset.questId = quest.id;
                         questItem.innerHTML = `
@@ -101,11 +87,14 @@
                         questListContent.appendChild(questItem);
                     }
                 });
-
-                questCounter.innerText = `Quests: ${docs.length}/25`;
+                
+                // Quest-Zähler nur aktualisieren, wenn das Element existiert
+                if (questCounter) {
+                    questCounter.innerText = `Quests: ${nonCategoryQuestsCount}/25`;
+                }
                 
                 if (!currentSelectedQuestId && docs.length > 0) {
-                    showQuestDetails(docs.find(q => !q.isCategory)?.id || docs[0].id);
+                    showQuestDetails(docs.find(q => !q.isCategory)?.id);
                 } else {
                     showQuestDetails(currentSelectedQuestId);
                 }
@@ -128,8 +117,8 @@
         function renderQuestView(quest) {
             questDetailContent.innerHTML = `
                 <h2>${quest.title}</h2>
-                <p class="quest-giver">Whiskey Slim in Booty Bay wants you to bring him the bottles of Pupellyverbos Port he lost.</p>
-                <p class="quest-objective">${quest.tasks || 'Objective'}: 12/12 (Complete)</p>
+                <p class="quest-giver">Ein Abgesandter des Spielmasters hat eine Nachricht für dich.</p>
+                <p class="quest-objective">${quest.tasks || 'Objective'}</p>
                 <h3>DESCRIPTION</h3>
                 <p>${quest.description.replace(/\n/g, '<br>')}</p>
                 <h3>REWARDS</h3>
@@ -221,7 +210,7 @@
             --color-quest-active: #fff;
             --color-quest-completed: #888;
             
-            /* Lokale Asset-Pfade - KORRIGIERT */
+            /* Lokale Asset-Pfade */
             --bg-image: url('https://images.alphacoders.com/488/48812.jpg');
             --questlog-background: url('assets/questlog_background.png');
             --icon-checkmark: url('assets/icon_checkmark.png');
@@ -241,17 +230,30 @@
         }
         .questlog-container {
             width: 1024px;
-            height: 700px; /* Höhe an das neue Hintergrundbild angepasst */
+            height: 700px;
             background-image: var(--questlog-background);
             background-size: 100% 100%;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             position: relative;
             color: var(--color-text-light);
         }
+        /* Hinzugefügter Header-Bereich */
+        .questlog-header {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-title);
+            font-size: 18px;
+            color: var(--color-text-light);
+            display: flex;
+            align-items: center;
+            gap: 150px; /* Abstand zwischen Titel und Zähler */
+        }
         .questlog-main {
             display: flex;
             position: absolute;
-            top: 70px; /* Positionierung an das neue Design angepasst */
+            top: 70px;
             bottom: 70px;
             left: 30px;
             right: 30px;
@@ -284,7 +286,7 @@
             cursor: pointer;
             font-size: 14px;
             border-radius: 4px;
-            margin-left: 20px; /* Einrücken für Unter-Quests */
+            margin-left: 20px;
         }
         .quest-item.active {
             background-color: rgba(255, 255, 255, 0.15);
@@ -316,7 +318,7 @@
         .questlog-button:hover { opacity: 0.7; }
         #abandon-btn { left: 45px; }
         #share-btn { right: 115px; }
-        #track-btn { right: 35px; } /* Angepasst für 'Exit' -> 'Track' */
+        #track-btn { right: 35px; }
         
         .quest-icon {
             width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
@@ -338,6 +340,12 @@
 </head>
 <body>
     <div class="questlog-container">
+        <!-- KORREKTUR: Fehlender Header wurde wieder hinzugefügt -->
+        <header class="questlog-header">
+            <span>Quest Log</span>
+            <span id="quest-counter">Quests: 0/25</span>
+        </header>
+
         <main class="questlog-main">
             <div class="quest-list-panel">
                 <div id="quest-list-content">
@@ -349,568 +357,8 @@
         <footer class="questlog-footer">
             <button class="questlog-button" id="abandon-btn">Abandon Quest</button>
             <button class="questlog-button" id="share-btn">Share Quest</button>
-            <button class="questlog-button" id="track-btn">Track</button> </footer>
-    </div>
-</body>
-</html>
-
-            --color-text-header: #f0d890;
-            --color-highlight: #ffb900;
-            
-            /* URLs für UI-Assets */
-            --bg-image: url('https://images.alphacoders.com/488/48812.jpg');
-            --parchment-texture: url('https://wow.zamimg.com/images/textures/parchment/parchmenttexture.png');
-            --questlog-border: url('https://wow.zamimg.com/images/tools/dragonflight-talent-calc/quest-details-bg.png');
-            --highlight-texture: url('https://wow.zamimg.com/images/QuestFrame/UI-QuestLog-Highlight.png');
-            --button-bg: url('https://wow.zamimg.com/images/classic/buttons/button-down.png');
-            --button-hover-bg: url('https://wow.zamimg.com/images/classic/buttons/button-up.png');
-
-            /* Icons */
-            --icon-book: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANiSURBVFhH7ZfNTxNBFMfvzMzuui3QAraEhqhAYwkfHggePHvA05N48uCJB6+ePAkngsQTiYfEgQdPQiQeKiFRhAapgNgW2gJpaCTW3WXn92Z2gVrqi/Ek/STdmdn3ffPNN/O+gGD8LzQfE9fP5d0W/NVoNOrv6Gi52Wz+xGq16uPj43eBHx4eXiAQCDo2NnYdDod/BvL6+vp9Mpn8Zzab/R1gLpe7mM/n32O5XG4YjUY/D+RyuV00Gv08k8lsxuPxgQDX6/WWiH0+HyIWi2F3dxfX19fc39/H6upqNpvNJQDEx8cjPz8fWVlZGB4exp6eHiwvL4uFhYVNs9msxuOxgwD+GmC1WpGVlYXc3FxkZ2djbW0NKSkpSEpKwsLCwsvhcPjE6/V+BdgLBAKqVCr14XA4fJ3P5w8D+O0AYjAY4Pf7kZGRgZSUFLi7u2Nzc5Pj4+O3gZxtgFarxZycHFy/fh3l5eXQ6/VoNBpwcHDA9vZ2kcvl3g2YvAAKhQKJiYlwc3NDfn4+CgoKMDc3x8XFRdTrdXcCZg8gIiICRUVF8Pn8kJaWBp/Ph9vtxu/3w+v1wuFwBPzu7i7u7u4+BsyZAJ/Ph8zMTABAampqwDAMotEopqeneHt7E4lE4syBtACkpqZi9+7d2N3dFQuFglEUhSAIAqfTiV6vx+l0EgBYLBYoFApsNhsAYLVaIZfL4fF4AIDX64VYLEagoCA0NzcjJycHSUlJGB0dxdjYGADg9/vR3t5O5HI5mBUApKenIxqNUlVVlWAwGGz2L4xGowgEAvB4PABAa2srDocDj8eDnZ0dDA4OAgDOzs7i8vISqampGFwB+L2G4+Pj4u7uLiYnJ6murmZmZubdAMkDmJ2dRVFREezt7REXF4e8vDxMTU2J3W7n/v5+oKurK7PZ7AMAnZ2dODs7O/12u32SyyW32w0A+Hy+dFEUAgA8Hg8uLi5cLpf/DGDY0dGB4uJifHx8MDAwQGVlJWfOnDm32Wz2e+vr68VisfhmgFarxcrKClZWVnB0dEQkEkFcXBxmZmaYn5+Hm5sbe3t74jeb8Xg8yWQyiMVi2NraIhwOMzg4CCcnJ0iSRKvV4vj4mGvXrsHHxwfT09Pw8PCgWq1SqVTqG4fD4e9Nphk//gYxYyT+9oD8GAAAAABJRU5ErkJggg==');
-            --icon-active: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACUSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
-            --icon-completed: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
-            --icon-failed: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEaSURBVDhPlZPLSwNREMa/e0+9VdSiQhC8CKpFEREhhJAUu3QhkEDQjUN3riR0q22CLu1KBBG6UFFa0B/Qh7R39zPj3Tgj2tJccI9n5jHzzXwzC1EURYhIlmU4juP9iYjjeZ5834fneWIhhBBCSKKUJMlyv2/b5iIiGo1G4jjeF3zbtoQQAAB4nodpmrb9Ps9CKSWKomjzPO9eKaVerwshhLXW+b4vxhgYY/s+M1prKcUYwzRNlVKEEKSU0pzzv/496zRNIQRhGEZGKaW11jmngL/gLvgd1f6y/yrLMsYYY5zTlBLP84DvgL9hN5/n+b4PIdS+70IIKeUiIhQKhXvvewE/A5/C17Gv/w8ghBDGGE3TTBsEAUDvPICcO31jGAAAAABJRU5ErkJggg==');
-            --icon-follow-up: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACJSURBVDhPY/z//z8DNQATMezFugAlQMWrAIkHq4EZiAHiSDOMPzGqgQ2IAcQkppEZxAFiQ/9/fPz/F6gEJsB4hsoQ7wPxX4iR2ADxIBOQAGL+7z8A8T8P/D8zYgLE/BeUgAfEjv0HCXhA9D+QD8SC/v+TDAkG4lAwGBCMB4SCgUCgDRQkxxGxABOQALoJAG2mN3e2uI5WAAAAAElFTkSuQmCC');
-        }
-
-        body {
-            background-image: var(--bg-image);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            font-family: var(--font-text);
-            color: var(--color-text);
-            margin: 0;
-            padding: 2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        /* --- Questlog Fenster --- */
-        .questlog-container {
-            width: 100%;
-            max-width: 960px;
-            height: 80vh;
-            min-height: 600px;
-            max-height: 720px;
-            border-style: solid;
-            border-width: 26px 26px 26px 26px;
-            -moz-border-image: var(--questlog-border) 26 26 26 26 repeat;
-            -webkit-border-image: var(--questlog-border) 26 26 26 26 repeat;
-            -o-border-image: var(--questlog-border) 26 26 26 26 repeat;
-            border-image: var(--questlog-border) 26 26 26 26 fill repeat;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* --- Header --- */
-        .questlog-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            position: relative;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            color: var(--color-text-header);
-            font-family: var(--font-title);
-            margin-top: -10px; /* Kompensiert den oberen Border-Bereich */
-            margin-left: -5px;
-            margin-right: -5px;
-        }
-
-        .questlog-header h1 {
-            font-size: 24px;
-            margin: 0;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .header-left .book-icon {
-            width: 32px;
-            height: 32px;
-            background-image: var(--icon-book);
-            background-size: contain;
-            margin-right: 15px;
-        }
-
-        .header-right span, .header-left span {
-             font-size: 16px;
-        }
-
-
-        /* --- Hauptinhalt --- */
-        .questlog-main {
-            flex-grow: 1;
-            display: flex;
-            background-image: var(--parchment-texture);
-            background-color: #e4d8b8;
-            padding: 15px;
-            gap: 15px;
-            overflow: hidden;
-            margin: 0 -10px -10px -10px; /* Füllt den Raum bis zur Border */
-        }
-        
-        /* --- Quest Liste (Links) --- */
-        .quest-list-panel {
-            width: 35%;
-            min-width: 250px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .quest-category {
-            font-family: var(--font-title);
-            color: var(--color-text);
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        
-        .quest-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 5px;
-            cursor: pointer;
-            font-size: 15px;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .quest-item:hover, .quest-item.active {
-            color: white;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        .quest-item::before { /* Highlight-Effekt */
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: var(--highlight-texture);
-            background-size: cover;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: -1;
-        }
-        
-        .quest-item:hover::before, .quest-item.active::before {
-            opacity: 1;
-        }
-
-        .quest-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            flex-shrink: 0;
-        }
-
-        .icon-active { background-image: var(--icon-active); }
-        .icon-completed { background-image: var(--icon-completed); filter: grayscale(1); }
-        .icon-follow-up { background-image: var(--icon-follow-up); }
-        .icon-failed { background-image: var(--icon-failed); }
-
-        .quest-level {
-            margin-left: auto;
-            font-style: italic;
-            color: #887a61;
-        }
-        .quest-item:hover .quest-level, .quest-item.active .quest-level {
-            color: #e0d0b0;
-        }
-
-        /* --- Quest Details (Rechts) --- */
-        .quest-detail-panel {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 10px;
-            line-height: 1.6;
-        }
-
-        .quest-detail-panel h2 {
-            font-family: var(--font-title);
-            font-size: 20px;
-            color: var(--color-text);
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        .quest-detail-panel h3 {
-            font-family: var(--font-title);
-            font-size: 16px;
-            margin-top: 25px;
-            margin-bottom: 10px;
-        }
-
-        /* --- Footer --- */
-        .questlog-footer {
-            display: flex;
-            justify-content: flex-start;
-            gap: 10px;
-            padding: 10px 15px 15px;
-            margin-bottom: -12px; /* Kompensiert den unteren Border-Bereich */
-            margin-left: -10px;
-            margin-right: -10px;
-        }
-        
-        .questlog-button {
-            padding: 8px 18px;
-            font-family: var(--font-text);
-            font-size: 14px;
-            color: var(--color-gold);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            border: 2px solid #5a4a3a;
-            border-radius: 5px;
-            background-color: #3a2a1a;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .questlog-button:hover {
-            color: white;
-            border-color: var(--color-gold);
-        }
-        
-        /* --- Scrollbar Styling (für Chrome/Safari) --- */
-        ::-webkit-scrollbar {
-            width: 14px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #ab9b7d;
-            border-left: 1px solid #7c6c4d;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #5a4a3a;
-            border: 1px solid #3a2a1a;
-            border-radius: 2px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #7c6c4d;
-        }
-
-        /* --- Modal für Sprüche / Passwort --- */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-image: var(--parchment-texture);
-            background-color: #e4d8b8;
-            padding: 30px;
-            border: 10px solid transparent;
-            border-image: var(--questlog-border) 26 26 26 26 fill repeat;
-            max-width: 500px;
-            text-align: center;
-            font-size: 18px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        }
-        .modal-content h3 {
-            font-family: var(--font-title);
-            margin-top: 0;
-        }
-        .modal-content input {
-            padding: 10px;
-            font-family: var(--font-text);
-            font-size: 16px;
-            width: 80%;
-            margin: 15px 0;
-            border: 2px solid #5a4a3a;
-            background-color: #fff;
-        }
-        .modal-buttons {
-            margin-top: 20px;
-        }
-
-        /* --- Responsive Design --- */
-        @media (max-width: 768px) {
-            body {
-                padding: 0;
-                background-image: none;
-                background-color: #1a1a1a;
-            }
-            .questlog-container {
-                width: 100%;
-                height: 100vh;
-                max-height: none;
-                border-width: 15px;
-                min-height: 0;
-            }
-            .questlog-main {
-                flex-direction: column;
-            }
-            .quest-list-panel {
-                width: 100%;
-                height: 40%; /* Mehr Platz für die Liste auf Mobilgeräten */
-                min-width: 0;
-                padding-right: 0;
-            }
-            .quest-detail-panel {
-                height: 60%;
-            }
-            .questlog-header h1 {
-                font-size: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="questlog-container">
-        <!-- Header -->
-        <header class="questlog-header">
-            <div class="header-left">
-                <div class="book-icon"></div>
-                <span id="quest-counter">Quests: 0/0</span>
-            </div>
-            <h1>Quest Log</h1>
-            <div class="header-right">
-                <span>Show Map</span>
-            </div>
-        </header>
-
-        <!-- Hauptinhalt -->
-        <main class="questlog-main">
-            <!-- Linke Seite: Quest Liste -->
-            <div class="quest-list-panel">
-                <div id="quest-list-content">
-                    <!-- Wird dynamisch via Firebase befüllt -->
-                </div>
-            </div>
-
-            <!-- Rechte Seite: Quest Details -->
-            <div class="quest-detail-panel" id="quest-detail-content">
-                <!-- Wird per JS befüllt -->
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="questlog-footer">
-            <button class="questlog-button" id="abandon-btn">Abandon</button>
-            <button class="questlog-button" id="share-btn">Share</button>
             <button class="questlog-button" id="track-btn">Track</button>
         </footer>
     </div>
-
-    <!-- Modals -->
-    <div id="abandon-modal" class="modal">
-        <div class="modal-content">
-            <p id="abandon-quote"></p>
-            <div class="modal-buttons">
-                <button class="questlog-button" onclick="closeModal('abandon-modal')">Schließen</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="track-modal" class="modal">
-        <div class="modal-content">
-            <h3>Spielmaster-Login</h3>
-            <p>Bitte Passwort eingeben, um die Quest zu verwalten.</p>
-            <input type="password" id="admin-password" placeholder="Passwort...">
-            <div class="modal-buttons">
-                <button class="questlog-button" id="admin-login-btn">Bestätigen</button>
-                <button class="questlog-button" onclick="closeModal('track-modal')">Abbrechen</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Importiere die notwendigen Firebase-Funktionen
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // DEIN FIREBASE PROJEKT-SETUP
-        // Ersetze dies mit den Konfigurationsdaten deines Firebase-Projekts
-        const firebaseConfig = {
-            apiKey: "DEIN_API_KEY",
-            authDomain: "DEIN_AUTH_DOMAIN",
-            projectId: "DEIN_PROJEKT_ID",
-            storageBucket: "DEIN_STORAGE_BUCKET",
-            messagingSenderId: "DEIN_MESSAGING_SENDER_ID",
-            appId: "DEIN_APP_ID"
-        };
-
-        // Firebase initialisieren
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Globale Variable für die Quest-Daten
-        let allQuests = {};
-        let activeQuestsCount = 0;
-        let totalQuestsCount = 0;
-
-        // UI Elemente
-        const questListContent = document.getElementById('quest-list-content');
-        const questDetailContent = document.getElementById('quest-detail-content');
-        const questCounter = document.getElementById('quest-counter');
-
-        // Funktion zum Rendern der Quest-Liste
-        function renderQuestList(quests) {
-            questListContent.innerHTML = ''; // Leere die aktuelle Liste
-            
-            // Sortiere Quests nach Status
-            const sortedQuests = Object.values(quests).sort((a, b) => {
-                const order = { 'active': 1, 'follow-up': 2, 'completed': 3, 'failed': 4 };
-                return (order[a.status] || 5) - (order[b.status] || 5);
-            });
-
-            sortedQuests.forEach(quest => {
-                const questItem = document.createElement('div');
-                questItem.className = `quest-item`;
-                questItem.dataset.questId = quest.id;
-
-                const iconClass = `icon-${quest.status || 'active'}`;
-
-                questItem.innerHTML = `
-                    <div class="quest-icon ${iconClass}"></div>
-                    <span>${quest.title}</span>
-                    <span class="quest-level">(${quest.level || 'Quest'})</span>
-                `;
-                questListContent.appendChild(questItem);
-            });
-            
-            // Update des Quest-Zählers
-            activeQuestsCount = sortedQuests.filter(q => q.status === 'active' || q.status === 'follow-up').length;
-            totalQuestsCount = sortedQuests.length;
-            questCounter.innerText = `Quests: ${activeQuestsCount}/${totalQuestsCount}`;
-        }
-
-        // Funktion zum Anzeigen von Quest-Details
-        async function showQuestDetails(questId) {
-            const quest = allQuests[questId];
-            if (quest) {
-                questDetailContent.innerHTML = `
-                    <h2>${quest.title}</h2>
-                    <p>${quest.description || 'Keine Beschreibung verfügbar.'}</p>
-                    <h3>Aktion</h3>
-                    <p>${quest.tasks || 'Keine Aufgaben definiert.'}</p>
-                    <h3>Belohnungen</h3>
-                    <p>${quest.reward || 'Keine Belohnung angegeben.'}</p>
-                `;
-                // Aktiven Status in der Liste aktualisieren
-                document.querySelectorAll('.quest-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                const activeItem = document.querySelector(`.quest-item[data-quest-id='${questId}']`);
-                if(activeItem) {
-                    activeItem.classList.add('active');
-                }
-            }
-        }
-        
-        // Authentifizierung und Daten-Listener
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                console.log("Angemeldet als:", user.uid);
-                // Listener für die 'quests' Collection
-                const questsRef = collection(db, "quests");
-                onSnapshot(questsRef, (querySnapshot) => {
-                    allQuests = {}; // Reset
-                    querySnapshot.forEach((doc) => {
-                        allQuests[doc.id] = { id: doc.id, ...doc.data() };
-                    });
-                    
-                    renderQuestList(allQuests);
-
-                    // Zeige die erste Quest in der Liste an, wenn eine vorhanden ist
-                    const firstQuestId = Object.keys(allQuests)[0];
-                    if (firstQuestId) {
-                        showQuestDetails(firstQuestId);
-                    } else {
-                        questDetailContent.innerHTML = "<p>Keine Quests im Logbuch. Sprich mit einem Questgeber, um neue Abenteuer zu beginnen!</p>";
-                    }
-                });
-            } else {
-                console.log("Benutzer ist nicht angemeldet. Versuche anonyme Anmeldung...");
-                signInAnonymously(auth).catch((error) => {
-                    console.error("Fehler bei anonymer Anmeldung:", error);
-                });
-            }
-        });
-
-
-        // Event-Listener für Klicks auf Quest-Items
-        questListContent.addEventListener('click', (event) => {
-            const questItem = event.target.closest('.quest-item');
-            if (questItem) {
-                const questId = questItem.dataset.questId;
-                showQuestDetails(questId);
-            }
-        });
-
-        // --- Statische Inhalte und Button-Funktionen ---
-        const abandonQuotes = [
-            "Arise, my champion!", "You are not prepared!", "Tempest Keep was merely a setback.",
-            "By fire be purged!", "LEEROOOY JENKINS!", "Work is da poop! No more!",
-            "You no take candle!", "Me not that kind of orc.", "Stand in the fire, DPS is higher.",
-            "Less QQ, more pew pew.", "Did you think we had forgotten? Did you think we had forgiven?",
-            "Time is money, friend.", "Lok'tar ogar! Victory or death!", "I'll rip the secrets from your flesh!",
-            "For the Horde!", "For the Alliance!", "That's a 50 DKP minus!", "More DOTS! More DOTS!",
-            "Interest ya in a pint?", "My strength is returning. Soon I will be whole again."
-        ];
-
-        document.getElementById('abandon-btn').addEventListener('click', () => {
-            const quote = abandonQuotes[Math.floor(Math.random() * abandonQuotes.length)];
-            document.getElementById('abandon-quote').innerText = quote;
-            openModal('abandon-modal');
-        });
-
-        document.getElementById('share-btn').addEventListener('click', () => {
-            const activeQuestItem = document.querySelector('.quest-item.active span');
-            if (activeQuestItem) {
-                const activeQuestTitle = activeQuestItem.innerText;
-                const text = encodeURIComponent(`Ich bin gerade auf einem epischen Quest-Abenteuer für meinen JGA! Schau dir meine aktuelle Aufgabe an: ${activeQuestTitle}`);
-                window.open(`https://wa.me/?text=${text}`, '_blank');
-            } else {
-                alert("Wähle erst eine Quest aus, die du teilen möchtest!");
-            }
-        });
-
-        document.getElementById('track-btn').addEventListener('click', () => {
-            openModal('track-modal');
-        });
-    </script>
-    
-    <script>
-        // Globale Modal-Funktionen (können außerhalb des Moduls bleiben)
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-    </script>
 </body>
 </html>
