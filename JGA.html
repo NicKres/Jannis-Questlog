@@ -55,7 +55,6 @@
         }
 
         function setupFirestoreListener() {
-            // KORREKTUR: Der vollständige Pfad zur Collection wird verwendet.
             const questsCollectionPath = "artifacts/wowquestlogprojekt/public/data/quests";
             onSnapshot(collection(db, questsCollectionPath), (snapshot) => {
                 questListContent.innerHTML = ''; // Liste leeren
@@ -111,8 +110,11 @@
             currentSelectedQuestId = questId;
             const quest = questsData[questId];
             
-            if (adminMode) renderAdminView(quest);
-            else renderQuestView(quest);
+            if (adminMode) {
+                renderAdminView(quest);
+            } else {
+                renderQuestView(quest);
+            }
             
             document.querySelectorAll('.quest-item').forEach(item => item.classList.remove('active'));
             const activeItem = document.querySelector(`.quest-item[data-quest-id='${questId}']`);
@@ -246,6 +248,14 @@
                     }
                 });
             }
+            
+            document.getElementById('exit-btn').addEventListener('click', () => {
+                 if (adminMode) {
+                    adminMode = false;
+                    if (trackQuestBtn) trackQuestBtn.classList.remove('active');
+                    showQuestDetails(currentSelectedQuestId);
+                }
+            });
 
             document.querySelector('.modal-close-btn').addEventListener('click', () => {
                 document.getElementById('quote-modal').style.display = 'none';
@@ -327,7 +337,7 @@
         .quest-detail-panel {
             width: 52.5%;
             overflow-y: auto;
-            padding-right: 25px;
+            padding: 10px;
             font-size: 14px;
             line-height: 1.6;
         }
@@ -379,6 +389,7 @@
         .questlog-button:hover { opacity: 0.7; }
         #abandon-btn { left: 4.5%; }
         #share-btn { left: 50%; transform: translateX(-50%); }
+        #exit-btn { right: 4.5%; }
         
         .quest-icon {
             width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
@@ -464,6 +475,7 @@
         <footer>
             <button class="questlog-button" id="abandon-btn">Abandon Quest</button>
             <button class="questlog-button" id="share-btn">Share Quest</button>
+            <button class="questlog-button" id="exit-btn">Exit</button>
         </footer>
     </div>
 
