@@ -67,26 +67,26 @@
                 let nonCategoryQuestsCount = 0;
                 docs.forEach(quest => {
                     questsData[quest.id] = quest;
+                    
+                    // Jedes Item wird klickbar gemacht, auch Kategorien
+                    const questItem = document.createElement('div');
+                    questItem.dataset.questId = quest.id;
 
                     if (quest.isCategory) {
-                        const categoryItem = document.createElement('div');
-                        categoryItem.className = 'quest-category';
-                        categoryItem.innerHTML = `<div class="quest-icon icon-collapse"></div><span>${quest.title}</span>`;
-                        questListContent.appendChild(categoryItem);
+                        questItem.className = 'quest-category';
+                        questItem.innerHTML = `<div class="quest-icon icon-collapse"></div><span>${quest.title}</span>`;
                     } else {
                         nonCategoryQuestsCount++;
-                        const questItem = document.createElement('div');
                         questItem.className = 'quest-item';
-                        questItem.dataset.questId = quest.id;
                         questItem.innerHTML = `
                             <span class="quest-title">${quest.title}</span>
                             <span class="quest-status">
                                 (${quest.status || 'Aktiv'})
-                                ${quest.status === 'completed' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
+                                ${quest.status === 'Abgeschlossen' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
                             </span>
                         `;
-                        questListContent.appendChild(questItem);
                     }
+                    questListContent.appendChild(questItem);
                 });
                 
                 if (questCounter) {
@@ -106,18 +106,21 @@
         }
         
         function showQuestDetails(questId) {
-             if (!questId || !questsData[questId] || questsData[questId].isCategory) return;
+            if (!questId || !questsData[questId]) return;
             currentSelectedQuestId = questId;
             const quest = questsData[questId];
             
             if (adminMode) {
                 renderAdminView(quest);
-            } else {
+            } else if (quest.status === 'Folgequest') {
+                renderLockedQuestView();
+            }
+            else {
                 renderQuestView(quest);
             }
             
-            document.querySelectorAll('.quest-item').forEach(item => item.classList.remove('active'));
-            const activeItem = document.querySelector(`.quest-item[data-quest-id='${questId}']`);
+            document.querySelectorAll('.quest-item, .quest-category').forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector(`[data-quest-id='${questId}']`);
             if(activeItem) activeItem.classList.add('active');
         }
 
@@ -125,9 +128,15 @@
             questDetailContent.innerHTML = `
                 <h2>${quest.title || ''}</h2>
                 <p>${quest.description ? quest.description.replace(/\n/g, '<br>') : ''}</p>
-                <h3>REWARDS</h3>
-                <p>${quest.reward ? quest.reward.replace(/\n/g, '<br>') : ''}</p>
+                ${quest.reward ? `<h3>REWARDS</h3><p>${quest.reward.replace(/\n/g, '<br>')}</p>` : ''}
                 <p class="quest-status-detail">Status: ${quest.status || 'Aktiv'}</p>
+            `;
+        }
+        
+        function renderLockedQuestView() {
+            questDetailContent.innerHTML = `
+                <h2>Unbekannte Quest</h2>
+                <p>Ihr müsst erst andere Aufgaben erfüllen, bevor diese Quest verfügbar wird.</p>
             `;
         }
 
@@ -145,6 +154,7 @@
                     <select id="admin-status">
                         <option value="Aktiv" ${quest.status === 'Aktiv' ? 'selected' : ''}>Aktiv</option>
                         <option value="Abgeschlossen" ${quest.status === 'Abgeschlossen' ? 'selected' : ''}>Abgeschlossen</option>
+                        <option value="Folgequest" ${quest.status === 'Folgequest' ? 'selected' : ''}>Folgequest</option>
                     </select>
                     <label><input type="checkbox" id="admin-is-category" ${quest.isCategory ? 'checked' : ''}> Ist eine Kategorie (Überschrift)?</label>
                     <label>Reihenfolge (Nummer):</label>
@@ -191,7 +201,7 @@
 
         function setupEventListeners() {
             questListContent.addEventListener('click', (event) => {
-                const questItem = event.target.closest('.quest-item');
+                const questItem = event.target.closest('.quest-item, .quest-category');
                 if (questItem) showQuestDetails(questItem.dataset.questId);
             });
 
@@ -277,15 +287,15 @@
         
         #quest-counter {
             position: absolute;
-            top: 12.9%;
-            right: 8.5%;
+            top: 12.6%;      /* 2px runter */
+            right: 8%;        /* 5px nach rechts */
             font-family: var(--font-title);
             font-size: 14px;
         }
         #admin-access-btn {
             position: absolute;
-            top: 4.5%;
-            left: 4%;
+            top: 5.9%;      /* 10px runter */
+            left: 5.5%;     /* 15px nach rechts */
             width: 45px;
             height: 45px;
             background: transparent;
@@ -314,13 +324,13 @@
             margin-left: 35px;
         }
         .quest-detail-panel {
-            width: 400px;
+            width: 360px;     /* Breite auf 360px gesetzt */
             overflow-y: auto;
             padding: 10px 0px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            margin-top: 80px;
-            margin-left: 25px;
+            margin-top: 90px; /* 10px runter */
+            margin-left: 15px;  /* 10px nach links */
         }
         .quest-category {
             display: flex;
@@ -329,17 +339,22 @@
             color: var(--color-gold);
             font-size: 15px;
             margin: 15px 0 5px 0;
+            cursor: pointer;
+        }
+        .quest-item, .quest-category {
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .quest-item.active, .quest-category.active { 
+            background-color: rgba(255, 255, 255, 0.15); 
         }
         .quest-item {
             display: flex;
             justify-content: space-between;
-            padding: 5px 10px;
             cursor: pointer;
             font-size: 14px;
-            border-radius: 4px;
             margin-left: 20px;
         }
-        .quest-item.active { background-color: rgba(255, 255, 255, 0.15); }
         .quest-title { color: var(--color-quest-active); }
         .quest-status { display: flex; align-items: center; color: var(--color-quest-completed); }
         
@@ -350,7 +365,6 @@
             font-family: var(--font-title); font-size: 14px; color: #000; margin-top: 20px;
         }
         .quest-detail-panel p { color: var(--color-text-dark); }
-        .quest-giver, .quest-objective { color: #50280a; font-weight: bold; }
         .quest-status-detail { font-style: italic; margin-top: 15px; }
 
         .questlog-button {
@@ -371,11 +385,11 @@
         .icon-collapse { background-image: var(--icon-collapse); margin-right: 8px;}
         .icon-checkmark { background-image: var(--icon-checkmark); margin-left: 8px; }
         
-        .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; }
+        .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; font-family: var(--font-text); }
         .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
         .admin-form input, .admin-form textarea, .admin-form select {
             width: 100%; padding: 8px; font-size: 14px; border: 1px solid #887a61; box-sizing: border-box;
-            border-radius: 3px;
+            border-radius: 3px; font-family: var(--font-text);
         }
         .admin-form textarea { resize: vertical; min-height: 80px; }
         .admin-save-button, .admin-new-quest-button {
