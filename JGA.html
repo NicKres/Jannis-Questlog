@@ -21,7 +21,7 @@
 
         // Firebase Module importieren
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         // Globale Variablen
@@ -119,26 +119,26 @@
                 <p class="quest-giver">${quest.giver || 'Ein Abgesandter des Spielmasters hat eine Nachricht für dich.'}</p>
                 <p class="quest-objective">${quest.tasks || 'Objective'}</p>
                 <h3>DESCRIPTION</h3>
-                <p>${quest.description.replace(/\n/g, '<br>')}</p>
+                <p>${quest.description ? quest.description.replace(/\n/g, '<br>') : ''}</p>
                 <h3>REWARDS</h3>
-                <p>${quest.reward.replace(/\n/g, '<br>')}</p>
+                <p>${quest.reward ? quest.reward.replace(/\n/g, '<br>') : ''}</p>
             `;
         }
 
-        function renderAdminView(quest) {
+        function renderAdminView(quest, isNew = false) {
              questDetailContent.innerHTML = `
-                <h2>Quest bearbeiten</h2>
+                <h2>${isNew ? 'Neue Quest erstellen' : 'Quest bearbeiten'}</h2>
                 <div class="admin-form">
                     <label>Titel:</label>
-                    <input type="text" id="admin-title" value="${quest.title}">
+                    <input type="text" id="admin-title" value="${quest.title || ''}">
                     <label>Questgeber-Text:</label>
                     <input type="text" id="admin-giver" value="${quest.giver || ''}">
                     <label>Beschreibung:</label>
-                    <textarea id="admin-description">${quest.description}</textarea>
+                    <textarea id="admin-description">${quest.description || ''}</textarea>
                     <label>Aufgaben:</label>
-                    <textarea id="admin-tasks">${quest.tasks}</textarea>
+                    <textarea id="admin-tasks">${quest.tasks || ''}</textarea>
                     <label>Belohnung:</label>
-                    <input type="text" id="admin-reward" value="${quest.reward}">
+                    <input type="text" id="admin-reward" value="${quest.reward || ''}">
                     <label>Zusatz (z.B. XP):</label>
                     <input type="text" id="admin-xp" value="${quest.xp || ''}">
                     <label>Status:</label>
@@ -146,14 +146,26 @@
                         <option value="active" ${quest.status === 'active' ? 'selected' : ''}>Aktiv</option>
                         <option value="completed" ${quest.status === 'completed' ? 'selected' : ''}>Abgeschlossen</option>
                     </select>
-                    <button class="admin-save-button" id="save-quest-btn">Speichern</button>
+                    <label>Ist eine Kategorie (Überschrift)?</label>
+                    <input type="checkbox" id="admin-is-category" ${quest.isCategory ? 'checked' : ''}>
+                    <label>Reihenfolge (Nummer):</label>
+                    <input type="number" id="admin-order" value="${quest.order || 0}">
+                    <button class="admin-save-button" id="save-quest-btn">${isNew ? 'Erstellen' : 'Speichern'}</button>
                 </div>
+                ${!isNew ? '' : '<button class="admin-new-quest-button" id="new-quest-btn">Neue Quest erstellen</button>'}
             `;
-            document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(quest.id));
+            if(!isNew) {
+                 const newQuestBtn = document.createElement('button');
+                 newQuestBtn.className = 'admin-new-quest-button';
+                 newQuestBtn.innerText = 'Neue Quest erstellen';
+                 newQuestBtn.onclick = () => renderAdminView({}, true);
+                 questDetailContent.querySelector('.admin-form').appendChild(newQuestBtn);
+            }
+
+            document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(quest.id, isNew));
         }
         
-        async function saveQuestChanges(questId) {
-            const questRef = doc(db, "quests", questId);
+        async function saveQuestChanges(questId, isNew) {
             const saveData = {
                 title: document.getElementById('admin-title').value,
                 giver: document.getElementById('admin-giver').value,
@@ -161,12 +173,25 @@
                 tasks: document.getElementById('admin-tasks').value,
                 reward: document.getElementById('admin-reward').value,
                 xp: document.getElementById('admin-xp').value,
-                status: document.getElementById('admin-status').value
+                status: document.getElementById('admin-status').value,
+                isCategory: document.getElementById('admin-is-category').checked,
+                order: parseInt(document.getElementById('admin-order').value, 10) || 0,
             };
-            await updateDoc(questRef, saveData);
-            adminMode = false;
-            if (trackQuestBtn) trackQuestBtn.classList.remove('active');
-            showQuestDetails(questId);
+
+            try {
+                if (isNew) {
+                    await addDoc(collection(db, "quests"), saveData);
+                } else {
+                    const questRef = doc(db, "quests", questId);
+                    await updateDoc(questRef, saveData);
+                }
+                adminMode = false;
+                if (trackQuestBtn) trackQuestBtn.classList.remove('active');
+                // Nach dem Speichern wird der Listener die Ansicht automatisch aktualisieren.
+            } catch (e) {
+                console.error("Fehler beim Speichern: ", e);
+                alert("Speichern fehlgeschlagen!");
+            }
         }
 
         function setupEventListeners() {
@@ -202,7 +227,12 @@
                     if (password === 'HomoComo') {
                         adminMode = true;
                         trackQuestBtn.classList.add('active');
-                        showQuestDetails(currentSelectedQuestId);
+                        // Zeige leeres Formular oder ausgewählte Quest
+                        if (currentSelectedQuestId) {
+                            showQuestDetails(currentSelectedQuestId);
+                        } else {
+                            renderAdminView({}, true);
+                        }
                     } else if (password) {
                         alert('Falsches Passwort!');
                     }
@@ -217,7 +247,6 @@
                 }
             });
 
-            // Close modal
             document.querySelector('.modal-close-btn').addEventListener('click', () => {
                 document.getElementById('quote-modal').style.display = 'none';
             })
@@ -236,16 +265,12 @@
             --color-quest-completed: #888;
             
             /* Lokale Asset-Pfade */
-            --bg-image: url('https://images.alphacoders.com/488/48812.jpg');
             --questlog-background: url('assets/questlog_background.png');
             --icon-checkmark: url('assets/icon_checkmark.png');
             --icon-collapse: url('assets/icon_collapse.png');
-            --scrollbar-thumb: url('assets/scrollbar_thumb.png');
         }
         body {
-            background-image: var(--bg-image);
-            background-size: cover;
-            background-position: center;
+            background-color: #1a1a1a; /* Dunkler Hintergrund */
             font-family: var(--font-text);
             display: flex;
             justify-content: center;
@@ -258,21 +283,11 @@
             height: 700px;
             background-image: var(--questlog-background);
             background-size: 100% 100%;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             position: relative;
             color: var(--color-text-light);
         }
         
         /* --- Header Elemente --- */
-        .questlog-title {
-            position: absolute;
-            top: 28px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: var(--font-title);
-            font-size: 18px;
-            color: var(--color-text-light);
-        }
         #quest-counter {
             position: absolute;
             top: 30px;
@@ -283,14 +298,12 @@
         #track-quest-btn {
             position: absolute;
             top: 100px;
-            left: 100px;
+            left: 120px;
             font-size: 14px;
             cursor: pointer;
             color: var(--color-quest-completed);
         }
-        #track-quest-btn.active {
-            color: var(--color-quest-active);
-        }
+        #track-quest-btn.active { color: var(--color-quest-active); }
         
         /* --- Hauptlayout --- */
         .questlog-main {
@@ -306,7 +319,7 @@
             width: 45%;
             overflow-y: auto;
             padding-right: 15px;
-            margin-top: 50px; /* Platz für "Track Quest" */
+            margin-top: 50px;
         }
         .quest-detail-panel {
             width: 55%;
@@ -332,9 +345,7 @@
             border-radius: 4px;
             margin-left: 20px;
         }
-        .quest-item.active {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
+        .quest-item.active { background-color: rgba(255, 255, 255, 0.15); }
         .quest-title { color: var(--color-quest-active); }
         .quest-status { display: flex; align-items: center; color: var(--color-quest-completed); }
         
@@ -351,7 +362,6 @@
         .questlog-button {
             position: absolute;
             bottom: 22px;
-            padding: 8px 18px;
             font-family: var(--font-text);
             font-size: 14px;
             color: var(--color-gold);
@@ -359,11 +369,15 @@
             background: none;
             cursor: pointer;
             transition: opacity 0.2s ease;
+            width: 130px; /* Breite der grafischen Buttons */
+            height: 35px; /* Höhe der grafischen Buttons */
+            text-align: center;
+            line-height: 35px;
         }
         .questlog-button:hover { opacity: 0.7; }
-        #abandon-btn { left: 45px; }
+        #abandon-btn { left: 40px; }
         #share-btn { left: 50%; transform: translateX(-50%); }
-        #exit-btn { right: 45px; }
+        #exit-btn { right: 40px; }
         
         .quest-icon {
             width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
@@ -372,14 +386,14 @@
         .icon-checkmark { background-image: var(--icon-checkmark); margin-left: 8px; }
         
         /* --- Admin Form --- */
-        .admin-form { color: #000; }
+        .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; }
         .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
         .admin-form input, .admin-form textarea, .admin-form select {
             width: 100%; padding: 8px; font-size: 14px; border: 1px solid #887a61; box-sizing: border-box;
             border-radius: 3px;
         }
         .admin-form textarea { resize: vertical; min-height: 80px; }
-        .admin-save-button {
+        .admin-save-button, .admin-new-quest-button {
             display: block; margin: 20px auto 0; padding: 10px 25px;
             font-family: var(--font-title); color: var(--color-gold);
             background-color: #3a2a1a; border: 1px solid var(--color-gold);
@@ -388,9 +402,9 @@
 
         /* --- Custom Scrollbar --- */
         ::-webkit-scrollbar { width: 16px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background-color: #555; border: 1px solid #222; }
-        ::-webkit-scrollbar-thumb:hover { background-color: #777; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #524033; border: 1px solid #2c1e14; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #715845; }
 
         /* --- Modal für Sprüche --- */
         .modal {
@@ -400,16 +414,24 @@
             justify-content: center; align-items: center;
         }
         .modal-content {
-            background-image: url('assets/questlog_background.png');
-            background-size: cover;
-            padding: 40px;
-            border: 2px solid var(--color-gold);
-            max-width: 500px; text-align: center;
-            font-size: 18px; color: var(--color-text-light);
-            text-shadow: 1px 1px 3px #000;
+            background-image: url('assets/messagebox.png');
+            background-size: 100% 100%;
+            width: 600px;
+            height: 150px;
+            padding: 20px 20px 20px 120px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #modal-quote {
+            font-size: 16px; color: var(--color-text-light);
+            text-shadow: 1px 1px 2px #000;
+            margin: 0;
         }
         .modal-close-btn {
-            margin-top: 20px; padding: 8px 20px;
+            align-self: flex-end;
+            margin-top: 10px; padding: 5px 15px;
             font-family: var(--font-title); cursor: pointer;
             color: var(--color-gold); background-color: #3a2a1a;
             border: 1px solid var(--color-gold);
@@ -420,7 +442,6 @@
 <body>
     <div class="questlog-container">
         <header>
-            <div class="questlog-title">Quest Log</div>
             <div id="track-quest-btn">Track Quest</div>
             <div id="quest-counter">Quests: 0/25</div>
         </header>
