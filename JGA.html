@@ -111,10 +111,8 @@
             currentSelectedQuestId = questId;
             const quest = questsData[questId];
             
-            // Hide all elements before showing new ones for the effect
             questDetailContent.querySelectorAll('*').forEach(el => el.style.opacity = '0');
 
-            // Delay rendering to allow for fade out
             setTimeout(() => {
                 if (adminMode) {
                     renderAdminView(quest);
@@ -124,12 +122,11 @@
                     renderQuestView(quest);
                 }
                 
-                // Typewriter effect
                 const elements = questDetailContent.querySelectorAll('h2, p, h3');
                 elements.forEach((el, index) => {
                     setTimeout(() => {
                         el.style.opacity = '1';
-                    }, index * 100); // 100ms delay between each element
+                    }, index * 200); // Verzögerung auf 200ms erhöht
                 });
 
             }, 150);
@@ -259,11 +256,9 @@
                 document.getElementById('quote-modal').style.display = 'none';
             });
 
-            // --- Soundtrack Controls ---
             const audioPlayer = document.getElementById('background-audio');
             const soundControl = document.getElementById('sound-control');
             
-            // Play on first user interaction
             document.body.addEventListener('click', () => {
                 if (!audioStarted) {
                     audioPlayer.play().catch(e => console.log("Audio konnte nicht gestartet werden:", e));
@@ -351,7 +346,6 @@
             box-shadow: 0 0 10px 3px red;
         }
         
-        /* --- Layout basierend auf Screenshot --- */
         .quest-list-panel {
             position: absolute;
             top: 18%;
@@ -375,13 +369,12 @@
             width: 41%;
             height: 71.5%;
             overflow-y: auto;
-            font-size: 16px; /* Schriftgröße erhöht */
+            font-size: 16px;
             line-height: 1.7;
-            padding: 25px 5px 5px 5px; /* Padding oben +10px */
+            padding: 35px 5px 5px 5px; /* Padding oben +10px */
             box-sizing: border-box;
         }
         
-        /* Typewriter Effect Styling */
         .quest-detail-panel > * {
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
@@ -522,7 +515,7 @@
 </head>
 <body>
     <!-- Ersetze die src durch deine gewünschte Musik-URL -->
-    <audio id="background-audio" src="https://archive.org/download/Gris-Soundtrack/Gris%20-%2001%20-%20Mae.mp3" loop></audio>
+    <audio id="background-audio" src="https://archive.org/download/WorldOfWarcraftMusic/1-02%20Elwynn%20Forest.mp3" loop></audio>
 
     <div class="questlog-container">
         <header>
