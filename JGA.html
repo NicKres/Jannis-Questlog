@@ -48,6 +48,7 @@
                 console.log("Firebase angebunden.");
                 setupFirestoreListener();
                 setupEventListeners();
+                setupOrientationMessage();
             } catch (error) {
                 console.error("Firebase Fehler: ", error);
                 questListContent.innerHTML = `<div class="quest-category" style="color: #c00;">Verbindung zur Datenbank fehlgeschlagen.</div>`;
@@ -68,7 +69,6 @@
                 docs.forEach(quest => {
                     questsData[quest.id] = quest;
                     
-                    // Jedes Item wird klickbar gemacht, auch Kategorien
                     const questItem = document.createElement('div');
                     questItem.dataset.questId = quest.id;
 
@@ -244,6 +244,18 @@
                 document.getElementById('quote-modal').style.display = 'none';
             });
         }
+        
+        function setupOrientationMessage() {
+            const orientationModal = document.getElementById('orientation-modal');
+            if (!orientationModal) return;
+            const quotes = [
+                "Die Titanen haben diese Welt nicht für das Hochformat erschaffen. Dreh es, Sterblicher!",
+                "Du schaust in die falsche Richtung, Champion! Dreh dein Gerät!",
+                "Für die Horde! (Und für ein besseres Erlebnis, halte dein Handy quer.)"
+            ];
+            document.getElementById('orientation-quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        }
+
         document.addEventListener('DOMContentLoaded', main);
     </script>
     
@@ -287,15 +299,15 @@
         
         #quest-counter {
             position: absolute;
-            top: 12.6%;      /* 2px runter */
-            right: 8%;        /* 5px nach rechts */
+            top: 13.3%;      /* 5px runter */
+            right: 8%;
             font-family: var(--font-title);
             font-size: 14px;
         }
         #admin-access-btn {
             position: absolute;
-            top: 5.9%;      /* 10px runter */
-            left: 5.5%;     /* 15px nach rechts */
+            top: 5.9%;
+            left: 5.5%;
             width: 45px;
             height: 45px;
             background: transparent;
@@ -322,15 +334,21 @@
             padding-right: 15px;
             margin-top: 85px; 
             margin-left: 35px;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
+        .quest-list-panel::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera*/
+        }
+
         .quest-detail-panel {
-            width: 360px;     /* Breite auf 360px gesetzt */
+            width: 360px;
             overflow-y: auto;
             padding: 10px 0px 10px 10px;
             font-size: 14px;
             line-height: 1.6;
-            margin-top: 90px; /* 10px runter */
-            margin-left: 15px;  /* 10px nach links */
+            margin-top: 90px;
+            margin-left: 15px;
         }
         .quest-category {
             display: flex;
@@ -434,11 +452,21 @@
             border: 1px solid var(--color-gold);
         }
 
+        #orientation-modal { display: none; }
+
+        @media (max-width: 768px) and (orientation: portrait) {
+            .questlog-container { display: none; }
+            #orientation-modal { display: flex; }
+        }
+
         @media (max-width: 1024px) {
             .questlog-container {
                 width: 100%;
                 height: 0;
                 padding-bottom: 68.36%; /* Aspect ratio 700/1024 */
+            }
+            .quest-detail-panel {
+                width: calc(100% - 40px);
             }
         }
 
@@ -469,6 +497,12 @@
         <div class="modal-content">
             <p id="modal-quote">Hier kommt ein Spruch hin.</p>
             <button class="modal-close-btn">Schließen</button>
+        </div>
+    </div>
+    
+    <div id="orientation-modal" class="modal">
+        <div class="modal-content">
+            <p id="orientation-quote">Bitte halte dein Gerät quer für das beste Erlebnis!</p>
         </div>
     </div>
 
