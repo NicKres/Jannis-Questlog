@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jannis Questlog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+Double+Pica&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        // Deine Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyChyA0KQQMG0M4SnaHIdxwguJH8dYYDO-w",
+            authDomain: "wowquestlogprojekt.firebaseapp.com",
+            projectId: "wowquestlogprojekt",
+            storageBucket: "wowquestlogprojekt.appspot.com",
+            messagingSenderId: "689308532820",
+            appId: "1:689308532820:web:0523701ea7c790a8c6adc1"
+        };
+
+        // Firebase Module importieren
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        // Globale Variablen
+        let questsData = {};
+        let currentSelectedQuestId = null;
+        let adminMode = false;
+        let db;
+
+        // UI Elemente
+        let questListContent, questDetailContent, questCounter, adminAccessBtn, newQuestBtnContainer;
+
+        // Hauptfunktion
+        async function main() {
+            questListContent = document.getElementById('quest-list-content');
+            questDetailContent = document.getElementById('quest-detail-content');
+            questCounter = document.getElementById('quest-counter');
+            adminAccessBtn = document.getElementById('admin-access-btn');
+            newQuestBtnContainer = document.getElementById('new-quest-btn-container');
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                const auth = getAuth(app);
+                await signInAnonymously(auth);
+                console.log("Firebase angebunden.");
+                setupFirestoreListener();
+                setupEventListeners();
+                setupOrientationMessage();
+            } catch (error) {
+                console.error("Firebase Fehler: ", error);
+                questListContent.innerHTML = `<div class="quest-category" style="color: #c00;">Verbindung zur Datenbank fehlgeschlagen.</div>`;
+            }
+        }
+
+        function setupFirestoreListener() {
+            const questsCollectionPath = "artifacts/wowquestlogprojekt/public/data/quests";
+            onSnapshot(collection(db, questsCollectionPath), (snapshot) => {
+                questListContent.innerHTML = ''; // Liste leeren
+                const docs = [];
+                snapshot.forEach((doc) => docs.push({ id: doc.id, ...doc.data() }));
+                
+                docs.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                questsData = {};
+                let nonCategoryQuestsCount = 0;
+                docs.forEach(quest => {
+                    questsData[quest.id] = quest;
+                    
+                    const questItem = document.createElement('div');
+                    questItem.dataset.questId = quest.id;
+
+                    if (quest.isCategory) {
+                        questItem.className = 'quest-category';
+                        questItem.innerHTML = `<div class="quest-icon icon-collapse"></div><span>${quest.title}</span>`;
+                    } else {
+                        nonCategoryQuestsCount++;
+                        questItem.className = 'quest-item';
+                        questItem.innerHTML = `
+                            <span class="quest-title">${quest.title}</span>
+                            <span class="quest-status">
+                                (${quest.status || 'Aktiv'})
+                                ${quest.status === 'Abgeschlossen' ? '<div class="quest-icon icon-checkmark"></div>' : ''}
+                            </span>
+                        `;
+                    }
+                    questListContent.appendChild(questItem);
+                });
+                
+                if (questCounter) {
+                    questCounter.innerText = `Quests: ${nonCategoryQuestsCount}/25`;
+                }
+                
+                const firstQuest = docs.find(q => !q.isCategory);
+                if (!currentSelectedQuestId && firstQuest) {
+                    showQuestDetails(firstQuest.id);
+                } else {
+                    showQuestDetails(currentSelectedQuestId);
+                }
+            }, (error) => {
+                console.error("Fehler beim Abrufen der Quests: ", error);
+                questListContent.innerHTML = `<div class="quest-category" style="color: #c00;">Quests konnten nicht geladen werden. Prüfe den DB-Pfad und die Sicherheitsregeln.</div>`;
+            });
+        }
+        
+        function showQuestDetails(questId) {
+            if (!questId || !questsData[questId]) return;
+            currentSelectedQuestId = questId;
+            const quest = questsData[questId];
+            
+            questDetailContent.querySelectorAll('*').forEach(el => el.style.opacity = '0');
+
+            setTimeout(() => {
+                if (adminMode) {
+                    renderAdminView(quest);
+                } else if (quest.status === 'Folgequest') {
+                    renderLockedQuestView();
+                } else {
+                    renderQuestView(quest);
+                }
+                
+                const elements = questDetailContent.querySelectorAll('h2, p, h3');
+                elements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, index * 200);
+                });
+
+            }, 150);
+            
+            document.querySelectorAll('.quest-item, .quest-category').forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector(`[data-quest-id='${questId}']`);
+            if(activeItem) activeItem.classList.add('active');
+        }
+
+        function renderQuestView(quest) {
+            questDetailContent.innerHTML = `
+                <h2>${quest.title || ''}</h2>
+                <p>${quest.description ? quest.description.replace(/\n/g, '<br>') : ''}</p>
+                ${quest.reward ? `<h3>BELOHNUNG</h3><p>${quest.reward.replace(/\n/g, '<br>')}</p>` : ''}
+                <p class="quest-status-detail">Status: ${quest.status || 'Aktiv'}</p>
+            `;
+        }
+        
+        function renderLockedQuestView() {
+            questDetailContent.innerHTML = `
+                <h2>Unbekannte Quest</h2>
+                <p>Ihr müsst erst andere Aufgaben erfüllen, bevor diese Quest verfügbar wird.</p>
+            `;
+        }
+
+        function renderAdminView(quest, isNew = false) {
+             questDetailContent.innerHTML = `
+                <h2>${isNew ? 'Neue Quest erstellen' : 'Quest bearbeiten'}</h2>
+                <div class="admin-form">
+                    <label>Titel:</label>
+                    <input type="text" id="admin-title" value="${quest.title || ''}">
+                    <label>Beschreibung:</label>
+                    <textarea id="admin-description">${quest.description || ''}</textarea>
+                    <label>Belohnung:</label>
+                    <input type="text" id="admin-reward" value="${quest.reward || ''}">
+                    <label>Status:</label>
+                    <select id="admin-status">
+                        <option value="Aktiv" ${quest.status === 'Aktiv' ? 'selected' : ''}>Aktiv</option>
+                        <option value="Abgeschlossen" ${quest.status === 'Abgeschlossen' ? 'selected' : ''}>Abgeschlossen</option>
+                        <option value="Folgequest" ${quest.status === 'Folgequest' ? 'selected' : ''}>Folgequest</option>
+                    </select>
+                    <label><input type="checkbox" id="admin-is-category" ${quest.isCategory ? 'checked' : ''}> Ist eine Kategorie (Überschrift)?</label>
+                    <label>Reihenfolge (Nummer):</label>
+                    <input type="number" id="admin-order" value="${quest.order || 0}">
+                    <button class="admin-save-button" id="save-quest-btn">${isNew ? 'Erstellen' : 'Speichern'}</button>
+                </div>
+            `;
+            
+            document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(isNew ? null : quest.id, isNew));
+        }
+        
+        async function saveQuestChanges(questId, isNew) {
+            const questsCollectionPath = "artifacts/wowquestlogprojekt/public/data/quests";
+            const saveData = {
+                title: document.getElementById('admin-title').value,
+                description: document.getElementById('admin-description').value,
+                reward: document.getElementById('admin-reward').value,
+                status: document.getElementById('admin-status').value,
+                isCategory: document.getElementById('admin-is-category').checked,
+                order: parseInt(document.getElementById('admin-order').value, 10) || 0,
+            };
+
+            try {
+                if (isNew) {
+                    await addDoc(collection(db, questsCollectionPath), saveData);
+                } else {
+                    if (!questId) {
+                        alert("Fehler: Keine Quest-ID zum Speichern vorhanden.");
+                        return;
+                    }
+                    const questRef = doc(db, questsCollectionPath, questId);
+                    await updateDoc(questRef, saveData);
+                }
+                adminMode = false;
+                if (adminAccessBtn) adminAccessBtn.classList.remove('active');
+                if (newQuestBtnContainer) newQuestBtnContainer.style.display = 'none';
+            } catch (e) {
+                console.error("Fehler beim Speichern: ", e);
+                alert("Speichern fehlgeschlagen!");
+            }
+        }
+
+        function setupEventListeners() {
+            questListContent.addEventListener('click', (event) => {
+                const questItem = event.target.closest('.quest-item, .quest-category');
+                if (questItem) showQuestDetails(questItem.dataset.questId);
+            });
+
+            document.getElementById('abandon-btn').addEventListener('click', () => {
+                const quotes = [
+                    "Arise, my champion!", "You are not prepared!", "Tempest Keep was merely a setback.",
+                    "By fire be purged!", "LEEROOOY JENKINS!", "Work is da poop! No more!",
+                    "You no take candle!", "Me not that kind of orc.", "Stand in the fire, DPS is higher.",
+                    "Less QQ, more pew pew.", "Did you think we had forgotten? Did you think we had forgiven?",
+                    "Time is money, friend.", "Lok'tar ogar! Victory or death!",
+                ];
+                document.getElementById('modal-quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+                document.getElementById('quote-modal').style.display = 'flex';
+            });
+
+            if (adminAccessBtn) {
+                adminAccessBtn.addEventListener('click', () => {
+                    if (adminMode) {
+                        adminMode = false;
+                        adminAccessBtn.classList.remove('active');
+                        newQuestBtnContainer.style.display = 'none';
+                        showQuestDetails(currentSelectedQuestId);
+                        return;
+                    }
+                    const password = prompt("Spielmaster-Passwort:");
+                    if (password === 'HomoComo') {
+                        adminMode = true;
+                        adminAccessBtn.classList.add('active');
+                        newQuestBtnContainer.style.display = 'block';
+                        if (currentSelectedQuestId) {
+                            showQuestDetails(currentSelectedQuestId);
+                        } else {
+                            renderAdminView({}, true);
+                        }
+                    } else if (password) {
+                        alert('Falsches Passwort!');
+                    }
+                });
+            }
+
+            document.getElementById('new-quest-btn').addEventListener('click', () => {
+                renderAdminView({}, true);
+            });
+            
+            document.querySelector('.modal-close-btn').addEventListener('click', () => {
+                document.getElementById('quote-modal').style.display = 'none';
+            });
+        }
+        
+        function setupOrientationMessage() {
+            const orientationModal = document.getElementById('orientation-modal');
+            if (!orientationModal) return;
+            const quotes = [
+                "Die Titanen haben diese Welt nicht für das Hochformat erschaffen. Dreh es, Sterblicher!",
+                "Du schaust in die falsche Richtung, Champion! Dreh dein Gerät!",
+                "Für die Horde! (Und für ein besseres Erlebnis, halte dein Handy quer.)"
+            ];
+            document.getElementById('orientation-quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        }
+
+        document.addEventListener('DOMContentLoaded', main);
+    </script>
+    
+    <style>
+        :root {
+            --font-title: 'Cinzel Decorative', serif;
+            --font-text: 'IM Fell Double Pica', serif;
+            --color-gold: #ffd100;
+            --color-text-light: #f0d890;
+            --color-text-dark: #222;
+            --color-quest-active: #fff;
+            --color-quest-completed: #888;
+            
+            /* Cache-Busting mit Versionsnummer */
+            --questlog-background: url('assets/questlog_background.png?v=4.0');
+            --icon-checkmark: url('assets/icon_checkmark.png?v=4.0');
+            --icon-collapse: url('assets/icon_collapse.png?v=4.0');
+            --messagebox-background: url('assets/messagebox.png?v=4.0');
+        }
+        body {
+            background-color: #1a1a1a;
+            font-family: var(--font-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .questlog-container {
+            width: 1024px;
+            max-width: 100%;
+            height: 700px;
+            background-image: var(--questlog-background);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            color: var(--color-text-light);
+        }
+        
+        #quest-counter {
+            position: absolute;
+            top: 13.8%;
+            right: 8%;
+            font-family: var(--font-title);
+            font-size: 14px;
+        }
+        #admin-access-btn {
+            position: absolute;
+            top: 8%;
+            left: 7%;
+            width: 45px;
+            height: 45px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #admin-access-btn.active {
+            box-shadow: 0 0 10px 3px red;
+        }
+        
+        /* --- Layout basierend auf Screenshot --- */
+        .quest-list-panel {
+            position: absolute;
+            top: 18%;
+            left: 4.5%;
+            width: 44%;
+            height: 71.5%;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            padding: 15px 25px 10px 15px;
+            box-sizing: border-box;
+        }
+        .quest-list-panel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .quest-detail-panel {
+            position: absolute;
+            top: 18%;
+            left: 51%;
+            width: 41%;
+            height: 71.5%;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.7;
+            padding: 45px 10px 5px 5px;
+            box-sizing: border-box;
+        }
+        
+        .quest-detail-panel > * {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .quest-category {
+            display: flex;
+            align-items: center;
+            font-family: var(--font-title);
+            color: var(--color-gold);
+            font-size: 15px;
+            margin: 15px 0 5px 0;
+            cursor: pointer;
+        }
+        .quest-item, .quest-category {
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .quest-item.active, .quest-category.active { 
+            background-color: rgba(255, 255, 255, 0.15); 
+        }
+        .quest-item {
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 20px;
+        }
+        .quest-title { color: var(--color-quest-active); }
+        .quest-status { display: flex; align-items: center; color: var(--color-quest-completed); }
+        
+        .quest-detail-panel h2 {
+            font-family: var(--font-title); font-size: 18px; color: #000; margin-top: 0;
+        }
+        .quest-detail-panel h3 {
+            font-family: var(--font-title); font-size: 14px; color: #000; margin-top: 20px;
+        }
+        .quest-detail-panel p { color: var(--color-text-dark); }
+        .quest-status-detail { font-style: italic; margin-top: 15px; }
+
+        .questlog-button {
+            position: absolute;
+            bottom: 4.7%; 
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            width: 130px;
+            height: 35px;
+            color: transparent;
+        }
+        #abandon-btn { left: 4.5%; }
+        
+        .quest-icon {
+            width: 16px; height: 16px; background-size: contain; background-repeat: no-repeat;
+        }
+        .icon-collapse { background-image: var(--icon-collapse); margin-right: 8px;}
+        .icon-checkmark { background-image: var(--icon-checkmark); margin-left: 8px; }
+        
+        #new-quest-btn-container {
+            display: none;
+            position: absolute;
+            top: 12.5%;
+            left: 20%;
+            width: 200px;
+        }
+        .admin-new-quest-button-main {
+            font-family: var(--font-title);
+            color: var(--color-gold);
+            background: #3a2a1a;
+            border: 1px solid var(--color-gold);
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; font-family: var(--font-text); }
+        .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
+        .admin-form input, .admin-form textarea, .admin-form select {
+            width: 100%; padding: 8px; font-size: 14px; border: 1px solid #887a61; box-sizing: border-box;
+            border-radius: 3px; font-family: var(--font-text);
+        }
+        .admin-form textarea { resize: vertical; min-height: 80px; }
+        .admin-save-button, .admin-new-quest-button {
+            display: block; margin: 20px auto 0; padding: 10px 25px;
+            font-family: var(--font-title); color: var(--color-gold);
+            background-color: #3a2a1a; border: 1px solid var(--color-gold);
+            border-radius: 5px; cursor: pointer;
+        }
+
+        ::-webkit-scrollbar { width: 16px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #524033; border: 1px solid #2c1e14; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #715845; }
+
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-image: var(--messagebox-background);
+            background-size: 100% 100%;
+            width: 600px;
+            height: 150px;
+            padding: 20px 20px 20px 160px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #modal-quote, #orientation-quote {
+            font-size: 16px; color: var(--color-text-light);
+            text-shadow: 1px 1px 2px #000;
+            margin: 0;
+        }
+        .modal-close-btn {
+            align-self: flex-end;
+            margin-top: 10px; padding: 5px 15px;
+            font-family: var(--font-title); cursor: pointer;
+            color: var(--color-gold); background-color: #3a2a1a;
+            border: 1px solid var(--color-gold);
+        }
+
+        #orientation-modal { display: none; }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 1024px) {
+            .questlog-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1024 / 700;
+            }
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            .questlog-container { display: none; }
+            #orientation-modal { display: flex; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="questlog-container">
+        <header>
+            <button id="admin-access-btn"></button>
+            <div id="quest-counter">Quests: 0/25</div>
+        </header>
+
+        <main>
+            <div class="quest-list-panel">
+                <div id="new-quest-btn-container" style="display: none;">
+                    <button id="new-quest-btn" class="admin-new-quest-button-main">Neue Quest</button>
+                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v4.0</span>
+                </div>
+                <div id="quest-list-content">
+                    <div class="quest-category">Lade Quests...</div>
+                </div>
+            </div>
+            <div class="quest-detail-panel" id="quest-detail-content"></div>
+        </main>
+
+        <footer>
+            <button class="questlog-button" id="abandon-btn"></button>
+        </footer>
+    </div>
+
+    <div id="quote-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-quote">Hier kommt ein Spruch hin.</p>
+            <button class="modal-close-btn">Schließen</button>
+        </div>
+    </div>
+    
+    <div id="orientation-modal" class="modal">
+        <div class="modal-content">
+            <p id="orientation-quote">Bitte halte dein Gerät quer für das beste Erlebnis!</p>
+        </div>
+    </div>
+
+</body>
+</html>
