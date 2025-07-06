@@ -122,7 +122,7 @@
                     renderQuestView(quest);
                 }
                 
-                const elements = questDetailContent.querySelectorAll('h2, p, h3');
+                const elements = questDetailContent.querySelectorAll('h2, p, h3, .admin-form');
                 elements.forEach((el, index) => {
                     setTimeout(() => {
                         el.style.opacity = '1';
@@ -154,8 +154,8 @@
 
         function renderAdminView(quest, isNew = false) {
              questDetailContent.innerHTML = `
-                <h2>${isNew ? 'Neue Quest erstellen' : 'Quest bearbeiten'}</h2>
                 <div class="admin-form">
+                    <h2>${isNew ? 'Neue Quest erstellen' : 'Quest bearbeiten'}</h2>
                     <label>Titel:</label>
                     <input type="text" id="admin-title" value="${quest.title || ''}">
                     <label>Beschreibung:</label>
@@ -286,10 +286,10 @@
             --color-quest-completed: #888;
             
             /* Cache-Busting mit Versionsnummer */
-            --questlog-background: url('assets/questlog_background.png?v=6.0');
-            --icon-checkmark: url('assets/icon_checkmark.png?v=6.0');
-            --icon-collapse: url('assets/icon_collapse.png?v=6.0');
-            --messagebox-background: url('assets/messagebox.png?v=6.0');
+            --questlog-background: url('assets/questlog_background.png?v=7.0');
+            --icon-checkmark: url('assets/icon_checkmark.png?v=7.0');
+            --icon-collapse: url('assets/icon_collapse.png?v=7.0');
+            --messagebox-background: url('assets/messagebox.png?v=7.0');
         }
         body {
             background-color: #1a1a1a;
@@ -440,7 +440,18 @@
             cursor: pointer;
         }
 
-        .admin-form { color: #000; max-height: 450px; overflow-y: auto; padding: 5px; font-family: var(--font-text); }
+        .admin-form { 
+            color: #000; 
+            max-height: 450px; 
+            overflow-y: auto; 
+            padding: 15px; 
+            font-family: var(--font-text);
+            background-color: rgba(240, 230, 210, 0.95); /* Heller Hintergrund für Lesbarkeit */
+            border: 1px solid #887a61;
+            border-radius: 5px;
+            z-index: 10;
+            position: relative;
+        }
         .admin-form label { display: block; margin-top: 10px; font-weight: bold; }
         .admin-form input, .admin-form textarea, .admin-form select {
             width: 100%; padding: 8px; font-size: 14px; border: 1px solid #887a61; box-sizing: border-box;
@@ -517,7 +528,7 @@
             <div class="quest-list-panel">
                 <div id="new-quest-btn-container" style="display: none;">
                     <button id="new-quest-btn" class="admin-new-quest-button-main">Neue Quest</button>
-                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v6.0</span>
+                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v7.0</span>
                 </div>
                 <div id="quest-list-content">
                     <div class="quest-category">Lade Quests...</div>
