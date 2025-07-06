@@ -175,7 +175,7 @@
                 </div>
             `;
             
-            document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(quest.id, isNew));
+            document.getElementById('save-quest-btn').addEventListener('click', () => saveQuestChanges(isNew ? null : quest.id, isNew));
         }
         
         async function saveQuestChanges(questId, isNew) {
@@ -193,6 +193,10 @@
                 if (isNew) {
                     await addDoc(collection(db, questsCollectionPath), saveData);
                 } else {
+                    if (!questId) {
+                        alert("Fehler: Keine Quest-ID zum Speichern vorhanden.");
+                        return;
+                    }
                     const questRef = doc(db, questsCollectionPath, questId);
                     await updateDoc(questRef, saveData);
                 }
@@ -512,6 +516,7 @@
             <div class="quest-list-panel">
                 <div id="new-quest-btn-container" style="display: none;">
                     <button id="new-quest-btn" class="admin-new-quest-button-main">Neue Quest</button>
+                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v2.0</span>
                 </div>
                 <div id="quest-list-content">
                     <div class="quest-category">Lade Quests...</div>
