@@ -285,10 +285,11 @@
             --color-quest-active: #fff;
             --color-quest-completed: #888;
             
-            --questlog-background: url('assets/questlog_background.png');
-            --icon-checkmark: url('assets/icon_checkmark.png');
-            --icon-collapse: url('assets/icon_collapse.png');
-            --messagebox-background: url('assets/messagebox.png');
+            /* Cache-Busting mit Versionsnummer */
+            --questlog-background: url('assets/questlog_background.png?v=4.0');
+            --icon-checkmark: url('assets/icon_checkmark.png?v=4.0');
+            --icon-collapse: url('assets/icon_collapse.png?v=4.0');
+            --messagebox-background: url('assets/messagebox.png?v=4.0');
         }
         body {
             background-color: #1a1a1a;
@@ -516,7 +517,7 @@
             <div class="quest-list-panel">
                 <div id="new-quest-btn-container" style="display: none;">
                     <button id="new-quest-btn" class="admin-new-quest-button-main">Neue Quest</button>
-                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v2.0</span>
+                    <span id="version-display" style="color: #555; font-size: 10px; margin-left: 10px;">v4.0</span>
                 </div>
                 <div id="quest-list-content">
                     <div class="quest-category">Lade Quests...</div>
